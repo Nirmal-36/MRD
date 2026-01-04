@@ -1,0 +1,9 @@
+# Ignore all backup files
+*.sql
+*.sql.gz
+*.dump
+*.bak
+
+# But track the directory structure
+!README.md
+!.gitignore
