@@ -78,7 +78,7 @@ MRD/
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- PostgreSQL 14+
+- MySQL 8.0+
 
 ### 1. Clone Repository
 
@@ -95,17 +95,20 @@ SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database
+# Database (MySQL)
 DB_NAME=mrd_db
-DB_USER=postgres
+DB_USER=root
 DB_PASSWORD=your-password
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=3306
 
-# Twilio (for OTP)
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_PHONE_NUMBER=your-twilio-phone
+# Email (for OTP)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=your-email@gmail.com
 ```
 
 Install and run:
