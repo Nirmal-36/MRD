@@ -17,7 +17,7 @@ from .serializers import (
 from .permissions import (
     IsAdminUser, IsMedicalStaff, PatientRestrictedViewPermission
 )
-from .otp_utils import generate_otp, store_otp, verify_otp, send_otp_sms, clear_otp, is_otp_verified
+from .otp_utils import generate_otp, store_otp, verify_otp, send_otp_email, clear_otp, is_otp_verified
 from .security_utils import (
     check_account_lockout, increment_login_attempts, reset_login_attempts,
     check_rate_limit, increment_rate_limit, reset_rate_limit, get_client_ip
@@ -267,19 +267,20 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # Generate and send OTP
         otp = generate_otp()
-        store_otp(user.phone, otp)
-        success, message = send_otp_sms(user.phone, otp)
+        store_otp(user.email, otp)
+        success, message = send_otp_email(user.email, otp)
         
         if success:
             # Increment rate limit counter
-            increment_rate_limit(f"otp_request_{user.phone}", time_window=300)
+            increment_rate_limit(f"otp_request_{user.email}", time_window=300)
             
-            # Mask phone number for security
-            masked_phone = user.phone[:2] + '*' * (len(user.phone) - 4) + user.phone[-2:]
+            # Mask email for security
+            email_parts = user.email.split('@')
+            masked_email = email_parts[0][:2] + '*' * (len(email_parts[0]) - 2) + '@' + email_parts[1]
             return Response({
                 'success': True,
-                'message': f'OTP sent to {masked_phone}',
-                'phone': user.phone,
+                'message': f'OTP sent to {masked_email}',
+                'email': user.email,
                 'username': user.username,
                 'full_name': user.get_full_name() or user.username,
                 'user_type': user.get_user_type_display(),
@@ -297,12 +298,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        phone = serializer.validated_data['phone']
+        email = serializer.validated_data['email']
         otp = serializer.validated_data['otp']
         
-        # Check rate limit: 5 verification attempts per phone per 5 minutes
+        # Check rate limit: 5 verification attempts per email per 5 minutes
         is_allowed, attempts_left, retry_after = check_rate_limit(
-            f"otp_verify_{phone}", 
+            f"otp_verify_{email}", 
             max_attempts=5, 
             time_window=300
         )
@@ -315,19 +316,19 @@ class UserViewSet(viewsets.ModelViewSet):
                 'retry_after': retry_after
             }, status=status.HTTP_429_TOO_MANY_REQUESTS)
         
-        is_valid, message = verify_otp(phone, otp, delete_after_verify=False)
+        is_valid, message = verify_otp(email, otp, delete_after_verify=False)
         
         if is_valid:
             # Reset rate limit on successful verification
-            reset_rate_limit(f"otp_verify_{phone}")
+            reset_rate_limit(f"otp_verify_{email}")
             return Response({
                 'success': True,
                 'message': 'OTP verified successfully. You can now reset your password.',
-                'phone': phone
+                'email': email
             })
         else:
             # Increment rate limit counter on failed verification
-            increment_rate_limit(f"otp_verify_{phone}", time_window=300)
+            increment_rate_limit(f"otp_verify_{email}", time_window=300)
             
             # Provide better error messages based on failure reason
             if 'expired' in message.lower() or 'not found' in message.lower():
@@ -349,13 +350,15 @@ class UserViewSet(viewsets.ModelViewSet):
         """Reset password after OTP verification"""
         serializer = ResetPasswordSerializer(data=request.data)
         if serializer.is_valid():
-            phone = serializer.validated_data['phone']
+            email = serializer.validated_data['email']
             otp = serializer.validated_data['otp']
+            user = serializer.validated_data['user']
+            new_password = serializer.validated_data['new_password']
             
             # Check if OTP was previously verified
-            if not is_otp_verified(phone, otp):
+            if not is_otp_verified(email, otp):
                 # If not verified, try to verify it now
-                is_valid, message = verify_otp(phone, otp, delete_after_verify=False)
+                is_valid, message = verify_otp(email, otp, delete_after_verify=False)
                 
                 if not is_valid:
                     return Response({
@@ -363,9 +366,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     }, status=status.HTTP_400_BAD_REQUEST)
             
             # Reset password
-            user = serializer.validated_data['user']
-            new_password = serializer.validated_data['new_password']
-            
             user.set_password(new_password)
             user.save()
             
@@ -373,7 +373,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Token.objects.filter(user=user).delete()
             
             # Clear OTP and verification status
-            clear_otp(phone)
+            clear_otp(email)
             
             return Response({
                 'success': True,

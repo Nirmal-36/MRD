@@ -202,11 +202,5 @@ class BedAllocation(models.Model):
     class Meta:
         db_table = 'bed_allocations'
         ordering = ['-admission_date']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['bed'],
-                condition=models.Q(is_active=True),
-                name='unique_active_bed_allocation',
-                violation_error_message='This bed already has an active allocation. Please discharge the current patient first.'
-            )
-        ]
+        # Note: MySQL doesn't support partial unique constraints with conditions
+        # The uniqueness is enforced at the application level in the serializer

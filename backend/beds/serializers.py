@@ -123,12 +123,26 @@ class BedAllocationSerializer(serializers.ModelSerializer):
         admission_date = data.get('admission_date')
         expected_discharge_date = data.get('expected_discharge_date')
         attending_doctor = data.get('attending_doctor')
+        patient_id = data.get('patient_id')
         
         # Check if bed is available (for new allocations)
         if not self.instance and bed and not bed.is_available:
             raise serializers.ValidationError({
                 'bed': f'Bed {bed.bed_number} is not available for allocation.'
             })
+        
+        # Check if patient already has an active bed allocation (for new allocations only)
+        if not self.instance and patient_id:
+            existing_allocation = BedAllocation.objects.filter(
+                patient_id=patient_id,
+                is_active=True
+            ).first()
+            
+            if existing_allocation:
+                raise serializers.ValidationError({
+                    'patient_id': f'Patient {patient_id} is already allocated to Bed {existing_allocation.bed.bed_number}. '
+                                  f'Please discharge from the current bed before allocating a new one.'
+                })
         
         # Validate dates
         if admission_date and expected_discharge_date:
@@ -185,12 +199,26 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
         admission_date = data.get('admission_date')
         expected_discharge_date = data.get('expected_discharge_date')
         attending_doctor = data.get('attending_doctor')
+        patient_id = data.get('patient_id')
         
         # Check bed availability
         if bed and not bed.is_available:
             raise serializers.ValidationError({
                 'bed': f'Bed {bed.bed_number} is currently occupied and not available for allocation.'
             })
+        
+        # Check if patient already has an active bed allocation
+        if patient_id:
+            existing_allocation = BedAllocation.objects.filter(
+                patient_id=patient_id,
+                is_active=True
+            ).first()
+            
+            if existing_allocation:
+                raise serializers.ValidationError({
+                    'patient_id': f'Patient {patient_id} is already allocated to Bed {existing_allocation.bed.bed_number}. '
+                                  f'Please discharge from the current bed before allocating a new one.'
+                })
         
         # Validate dates
         if admission_date and expected_discharge_date:

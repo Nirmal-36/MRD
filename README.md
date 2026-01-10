@@ -14,19 +14,20 @@ A comprehensive web application designed to digitalize medical room operations f
 - **Analytics Dashboard** - Reports on patient visits, medicine usage, and bed utilization
 
 ### Key Features
-- OTP-based password reset via Twilio SMS
+- Email-based OTP password reset system
 - Department-based access control for HODs
 - Automated medicine stock alerts
 - Treatment and prescription management
 - Bed allocation with patient tracking
+- Duplicate bed/patient allocation prevention
 - Real-time availability status
 - Mobile-responsive interface
 
 ### Tech Stack
-- **Backend:** Django 5.2.6, Django REST Framework 3.16.1, PostgreSQL
+- **Backend:** Django 5.2.7, Django REST Framework 3.16.1, MySQL 9.5.0
 - **Frontend:** React 19.2.0, Material-UI 7.3.4
 - **Authentication:** JWT tokens with role-based permissions
-- **SMS:** Twilio integration for OTP
+- **Email:** Django SMTP with Gmail for OTP delivery
 - **Additional:** Celery for async tasks, Redis for caching, Sentry for error tracking
 
 ## 📁 Project Structure

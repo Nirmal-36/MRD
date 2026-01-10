@@ -8,7 +8,7 @@ Django>=5.2.6
 djangorestframework>=3.15.0
 
 # Database Support
-psycopg2-binary>=2.9.0
+mysqlclient>=2.2.0
 
 # Authentication & Security
 django-cors-headers>=4.4.0

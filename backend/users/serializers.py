@@ -124,11 +124,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class ForgotPasswordSerializer(serializers.Serializer):
-    """Serializer for requesting password reset - accepts username, phone, or email"""
-    identifier = serializers.CharField(help_text="Username, phone number, or email")
+    """Serializer for requesting password reset - accepts username or email"""
+    identifier = serializers.CharField(help_text="Username or email")
     
     def validate_identifier(self, value):
-        """Try to find user by username, phone, or email"""
+        """Try to find user by username or email"""
         user = None
         
         # Try username first
@@ -137,19 +137,15 @@ class ForgotPasswordSerializer(serializers.Serializer):
         except User.DoesNotExist:
             pass
         
-        # Try phone number
-        if not user and value:
-            user = User.objects.filter(phone=value).first()
-        
         # Try email
         if not user and value:
             user = User.objects.filter(email=value).first()
         
         if not user:
-            raise serializers.ValidationError('No user found with this username, phone, or email.')
+            raise serializers.ValidationError('No user found with this username or email.')
         
-        if not user.phone:
-            raise serializers.ValidationError('User does not have a phone number registered. Please contact admin.')
+        if not user.email:
+            raise serializers.ValidationError('User does not have an email address registered. Please contact admin.')
         
         # Store the user object for later use
         self.context['user'] = user
@@ -158,15 +154,8 @@ class ForgotPasswordSerializer(serializers.Serializer):
 
 class VerifyOTPSerializer(serializers.Serializer):
     """Serializer for OTP verification"""
-    phone = serializers.CharField()
+    email = serializers.EmailField()
     otp = serializers.CharField(min_length=6, max_length=6)
-    
-    def validate_phone(self, value):
-        """Validate Indian phone number format"""
-        try:
-            return validate_indian_phone(value)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(str(e.message))
     
     def validate_otp(self, value):
         """Validate OTP format"""
@@ -178,17 +167,10 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
     """Serializer for resetting password with OTP verification"""
-    phone = serializers.CharField()
+    email = serializers.EmailField()
     otp = serializers.CharField(min_length=6, max_length=6)
     new_password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
-    
-    def validate_phone(self, value):
-        """Validate Indian phone number format"""
-        try:
-            return validate_indian_phone(value)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(str(e.message))
     
     def validate_otp(self, value):
         """Validate OTP format"""
@@ -207,11 +189,11 @@ class ResetPasswordSerializer(serializers.Serializer):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError({'confirm_password': "Passwords don't match."})
         
-        phone = data.get('phone')
-        user = User.objects.filter(phone=phone).first()
+        email = data.get('email')
+        user = User.objects.filter(email=email).first()
         
         if not user:
-            raise serializers.ValidationError({'phone': 'No account found with this phone number.'})
+            raise serializers.ValidationError({'email': 'No account found with this email address.'})
         
         data['user'] = user
         return data
@@ -220,7 +202,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
-    phone = serializers.CharField(required=True, min_length=10, max_length=15)
+    phone = serializers.CharField(required=False, allow_blank=True, min_length=10, max_length=15)
     employee_id = serializers.CharField(required=False, allow_blank=True)
     student_id = serializers.CharField(required=False, allow_blank=True)
     
@@ -231,11 +213,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'user_type', 'phone', 'employee_id', 'student_id', 'department'
         ]
         extra_kwargs = {
-            'phone': {'required': True}
+            'phone': {'required': False}
         }
     
     def validate_phone(self, value):
-        """Validate Indian phone number format"""
+        """Validate Indian phone number format (optional)"""
+        if not value:  # Phone is optional
+            return value
         try:
             validated_phone = validate_indian_phone(value)
             # Check if phone already exists
@@ -336,7 +320,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
     """Simplified registration for patients (students and employees)"""
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
-    phone = serializers.CharField(required=True, min_length=10, max_length=15)
+    phone = serializers.CharField(required=False, allow_blank=True, min_length=10, max_length=15)
     
     class Meta:
         model = User
@@ -347,7 +331,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'user_type': {'required': True},
-            'phone': {'required': True}
+            'phone': {'required': False}
         }
     
     def validate_user_type(self, value):
@@ -357,7 +341,9 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         return value
     
     def validate_phone(self, value):
-        """Validate Indian phone number format"""
+        """Validate Indian phone number format (optional)"""
+        if not value:  # Phone is optional
+            return value
         try:
             validated_phone = validate_indian_phone(value)
             # Check if phone already exists

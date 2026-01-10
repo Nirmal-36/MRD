@@ -3,7 +3,7 @@
 # =====================================
 # MRD SYSTEM - DATABASE RESTORE SCRIPT
 # =====================================
-# Restore PostgreSQL database from backup
+# Restore MySQL database from backup
 # Usage: ./restore_database.sh <backup_file>
 
 # Configuration
@@ -53,14 +53,12 @@ echo "📅 Date: $(date)"
 echo ""
 
 # Extract and restore
-export PGPASSWORD="$DB_PASSWORD"
-
 if [[ "$BACKUP_FILE" == *.gz ]]; then
     echo "📦 Decompressing and restoring..."
-    gunzip -c "$BACKUP_FILE" | psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME"
+    gunzip -c "$BACKUP_FILE" | mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME"
 else
     echo "📥 Restoring from uncompressed backup..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" < "$BACKUP_FILE"
+    mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "$BACKUP_FILE"
 fi
 
 if [ $? -eq 0 ]; then

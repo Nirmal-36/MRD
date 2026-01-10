@@ -3,7 +3,7 @@
 # =====================================
 # MRD SYSTEM - DATABASE BACKUP SCRIPT
 # =====================================
-# Automated PostgreSQL backup with rotation
+# Automated MySQL backup with rotation
 # Usage: ./backup_database.sh
 
 # Configuration
@@ -36,12 +36,12 @@ echo "📁 Backup location: $BACKUP_COMPRESSED"
 echo ""
 
 # Perform backup
-export PGPASSWORD="$DB_PASSWORD"
-pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
-    --no-owner \
-    --no-acl \
-    --format=plain \
-    --file="$BACKUP_FILE"
+mysqldump -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" \
+    --single-transaction \
+    --routines \
+    --triggers \
+    --events \
+    "$DB_NAME" > "$BACKUP_FILE"
 
 # Check if backup was successful
 if [ $? -eq 0 ]; then

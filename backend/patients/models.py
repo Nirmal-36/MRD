@@ -96,9 +96,8 @@ class Patient(models.Model):
     class Meta:
         db_table = 'patients'
         ordering = ['-created_at']
-        constraints = [
-            models.UniqueConstraint(fields=['user'], name='unique_user_patient_record', condition=models.Q(user__isnull=False))
-        ]
+        # Note: MySQL doesn't support partial unique constraints with conditions
+        # The uniqueness is enforced at the application level
 
 
 class Treatment(models.Model):

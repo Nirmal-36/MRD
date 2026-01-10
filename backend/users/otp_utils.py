@@ -1,9 +1,7 @@
 import random
 import logging
-import os
-from datetime import timedelta
-from django.utils import timezone
 from django.core.cache import cache
+from django.core.mail import send_mail
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -14,17 +12,17 @@ def generate_otp():
     return str(random.randint(100000, 999999))
 
 
-def store_otp(phone_number, otp, expiry_minutes=10):
+def store_otp(email, otp, expiry_minutes=10):
     """Store OTP in cache with expiration"""
-    cache_key = f"otp_{phone_number}"
+    cache_key = f"otp_{email}"
     cache.set(cache_key, otp, timeout=expiry_minutes * 60)
-    logger.info(f"OTP stored for {phone_number}: {otp}")  # For development only
+    logger.info(f"OTP stored for {email}")
     return True
 
 
-def verify_otp(phone_number, otp, delete_after_verify=False):
+def verify_otp(email, otp, delete_after_verify=False):
     """Verify OTP from cache"""
-    cache_key = f"otp_{phone_number}"
+    cache_key = f"otp_{email}"
     stored_otp = cache.get(cache_key)
     
     if not stored_otp:
@@ -35,7 +33,7 @@ def verify_otp(phone_number, otp, delete_after_verify=False):
     
     # Mark OTP as verified for password reset flow
     if not delete_after_verify:
-        verified_key = f"otp_verified_{phone_number}"
+        verified_key = f"otp_verified_{email}"
         cache.set(verified_key, otp, timeout=600)  # 10 minutes
     else:
         # Delete OTP immediately if requested
@@ -44,79 +42,62 @@ def verify_otp(phone_number, otp, delete_after_verify=False):
     return True, "OTP verified successfully"
 
 
-def clear_otp(phone_number):
+def clear_otp(email):
     """Clear OTP and verification status from cache"""
-    cache_key = f"otp_{phone_number}"
-    verified_key = f"otp_verified_{phone_number}"
+    cache_key = f"otp_{email}"
+    verified_key = f"otp_verified_{email}"
     cache.delete(cache_key)
     cache.delete(verified_key)
-    logger.info(f"OTP and verification status cleared for {phone_number}")
+    logger.info(f"OTP and verification status cleared for {email}")
 
 
-def is_otp_verified(phone_number, otp):
+def is_otp_verified(email, otp):
     """Check if OTP was previously verified"""
-    verified_key = f"otp_verified_{phone_number}"
+    verified_key = f"otp_verified_{email}"
     verified_otp = cache.get(verified_key)
     return verified_otp == otp
 
 
-def send_otp_sms(phone_number, otp):
+def send_otp_email(email, otp):
     """
-    Send OTP via SMS using Twilio
-    Supports both trial (verified numbers) and production accounts
-    Falls back to console logging if Twilio is not configured
+    Send OTP via email using Django's email backend
     """
     try:
-        # Check if Twilio is configured
-        twilio_enabled = all([
-            hasattr(settings, 'TWILIO_ACCOUNT_SID'),
-            hasattr(settings, 'TWILIO_AUTH_TOKEN'),
-            hasattr(settings, 'TWILIO_PHONE_NUMBER'),
-            settings.TWILIO_ACCOUNT_SID,
-            settings.TWILIO_AUTH_TOKEN
-        ])
+        subject = "MRD System - Password Reset OTP"
+        message = f"""
+Hello,
+
+Your One-Time Password (OTP) for password reset is:
+
+{otp}
+
+This OTP is valid for 10 minutes.
+
+If you did not request a password reset, please ignore this email.
+
+Best regards,
+MRD System Team
+        """.strip()
         
-        if not twilio_enabled:
-            # Development mode: Twilio not configured - Log to console
-            logger.warning(f"Twilio not configured - Development mode OTP")
-            logger.info(f"OTP for {phone_number}: {otp} (valid for 10 minutes)")
-            return True, "OTP sent successfully (console mode)"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
         
-        # Twilio is configured - try to send SMS
-        from twilio.rest import Client
-        
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        
-        # Format phone number for international SMS (add +91 for India if needed)
-        formatted_phone = phone_number if phone_number.startswith('+') else f'+91{phone_number}'
-        
-        # Check if this is a trial account with verified numbers
-        verified_numbers = getattr(settings, 'TWILIO_VERIFIED_NUMBERS', '')
-        verified_list = [num.strip() for num in verified_numbers.split(',') if num.strip()]
-        
-        # Try to send SMS
-        message = client.messages.create(
-            body=f"Your MRD System OTP is: {otp}. Valid for 10 minutes. Do not share this code.",
-            from_=settings.TWILIO_PHONE_NUMBER,
-            to=formatted_phone
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=from_email,
+            recipient_list=recipient_list,
+            fail_silently=False,
         )
         
-        logger.info(f"✅ SMS sent successfully to {phone_number}. SID: {message.sid}")
-        return True, "OTP sent successfully to your mobile"
+        logger.info(f"✅ OTP email sent successfully to {email}")
+        return True, "OTP sent successfully to your email"
             
     except Exception as e:
-        error_str = str(e)
-        logger.error(f"Failed to send OTP to {phone_number}: {error_str}")
-        
-        # Check if it's a trial account unverified number error
-        if 'unverified' in error_str.lower() or '21608' in error_str:
-            # Trial account with unverified number - log to console
-            logger.warning(f"Twilio trial account - unverified number: {phone_number}")
-            logger.info(f"OTP for {phone_number}: {otp} (valid for 10 minutes)")
-            logger.info(f"To send real SMS: Verify {formatted_phone if phone_number.startswith('+') else f'+91{phone_number}'} at Twilio console or upgrade account")
-            return True, f"OTP generated: {otp} (Verify phone at Twilio console for SMS delivery)"
-        else:
-            # Other Twilio errors - log and continue
-            logger.error(f"SMS delivery failed for {phone_number}: {error_str[:100]}")
-            logger.info(f"Fallback mode - OTP for {phone_number}: {otp} (valid for 10 minutes)")
-            return True, f"OTP generated: {otp} (SMS failed, check logs)"
+        logger.error(f"Failed to send OTP email to {email}: {str(e)}")
+        # In development, log the OTP
+        if settings.DEBUG:
+            logger.warning(f"Development mode - OTP for {email}: {otp}")
+            return True, f"OTP generated (check console): {otp}"
+        return False, "Failed to send OTP email. Please try again."
+
