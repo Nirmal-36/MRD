@@ -1,0 +1,582 @@
+import React from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  CircularProgress,
+  Alert,
+  Grid,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  useTheme,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Tab,
+} from "@mui/material";
+import {
+  CalendarToday,
+  Business,
+} from "@mui/icons-material";
+import {
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
+// ===========================
+// ⏫ 1. PAGE HEADER
+// ===========================
+export const PageHeader = ({ title, subtitle, icon: Icon, department }) => {
+  const theme = useTheme();
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: theme.spacing(3),
+        mb: theme.spacing(3),
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+        color: theme.palette.primary.contrastText,
+        borderRadius: 4,
+      }}
+    >
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box>
+          <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+            {Icon && <Icon sx={{ mr: 1, verticalAlign: "middle" }} />}
+            {title}
+          </Typography>
+          <Typography variant="body1" sx={{ opacity: 0.9 }}>
+            {subtitle}
+          </Typography>
+        </Box>
+        {department && (
+          <Chip
+            icon={<Business />}
+            label={`Department: ${department}`}
+            color="secondary"
+            size="small"
+            sx={{ bgcolor: "action.selected", color: "inherit" }}
+          />
+        )}
+      </Box>
+    </Paper>
+  );
+};
+
+// ===========================
+// 📅 2. DATE RANGE FILTER
+// ===========================
+export const DateRangeFilter = ({
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  onRefresh,
+  loading,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <Paper
+      sx={{
+        p: theme.spacing(2),
+        borderRadius: 4,
+        mb: theme.spacing(2),
+      }}
+    >
+      <Grid container spacing={2} alignItems="center">
+        <Grid>
+          <CalendarToday color="primary" />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <TextField
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            fullWidth
+            size="small"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <TextField
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            fullWidth
+            size="small"
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+        <Grid>
+          <Button
+            variant="contained"
+            startIcon={<CalendarToday />}
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            Get Data
+          </Button>
+        </Grid>
+        <Grid item xs>
+          <Typography variant="body2" color="text.secondary">
+            Data from {new Date(startDate).toLocaleDateString()} to{" "}
+            {new Date(endDate).toLocaleDateString()}
+          </Typography>
+        </Grid>
+      </Grid>
+    </Paper>
+  );
+};
+
+// ===========================
+// ⏳ 3. LOADING STATE
+// ===========================
+export const LoadingState = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+    <CircularProgress />
+  </Box>
+);
+
+// ===========================
+// ❌ 4. ERROR STATE
+// ===========================
+export const ErrorState = ({ message }) => (
+  <Alert severity="error" sx={{ my: 2 }}>
+    {message || "An unexpected error occurred"}
+  </Alert>
+);
+
+// ===========================
+// 📊 5. STAT CARD
+// ===========================
+export const StatCard = ({ label, value, icon: Icon, gradient }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      sx={{
+        background: gradient,
+        color: theme.palette.primary.contrastText,
+        borderRadius: 4,
+        height: "100%",
+      }}
+    >
+      <CardContent>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              {label}
+            </Typography>
+            <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+              {value}
+            </Typography>
+          </Box>
+          {Icon && <Icon sx={{ fontSize: 36, opacity: 0.3 }} />}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ===========================
+// 📈 6. METRIC BOX
+// ===========================
+export const MetricBox = ({ label, value, color }) => {
+  const theme = useTheme();
+  return (
+    <Paper
+      sx={{
+        p: theme.spacing(2),
+        textAlign: "center",
+        borderRadius: 4,
+        border: `1px solid ${theme.palette.divider}`,
+      }}
+    >
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        sx={{ color: color || theme.palette.text.primary }}
+      >
+        {value}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+    </Paper>
+  );
+};
+
+// ===========================
+// 📘 7. REPORT CARD
+// ===========================
+export const ReportCard = ({ title, subtitle, icon: Icon, color, onClick }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      onClick={onClick}
+      sx={{
+        p: theme.spacing(2),
+        borderRadius: 4,
+        cursor: "pointer",
+        transition: "0.2s",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: theme.shadows[4],
+        },
+      }}
+    >
+      <CardContent>
+        <Box display="flex" alignItems="center" gap={2}>
+          {Icon && <Icon sx={{ fontSize: 36, color }} />}
+          <Box>
+            <Typography variant="h6" fontWeight="bold">
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {subtitle}
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// ===========================
+// 📊 8. CHART CARDS
+// ===========================
+export const BarChartCard = ({ title, data, dataKey, nameKey, color, bars }) => {
+  const theme = useTheme();  
+  return (
+    <Box sx={{ mb: theme.spacing(4), overflow: 'hidden' }}>
+      {title && (
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ mb: theme.spacing(3) }}
+        >
+          {title}
+        </Typography>
+      )}
+      {data?.length ? (
+        <ResponsiveContainer width="100%" height={450}>
+          <BarChart data={data} margin={{ top: 20, right: 50, left: 20, bottom: 80 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <XAxis
+              dataKey={nameKey || "month"}
+              stroke={theme.palette.text.secondary}
+              angle={-45}
+              textAnchor="end"
+              height={100}
+              interval={'preserveStartEnd'}
+              tick={{ fontSize: 11 }}
+              tickMargin={10}
+            />
+            <YAxis 
+              stroke={theme.palette.text.secondary}
+              width={60}
+              tickFormatter={(value) => value.toFixed(0)}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 4,
+                borderColor: theme.palette.divider,
+                boxShadow: theme.shadows[3],
+              }}
+            />
+            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            {/* Support multiple bars */}
+            {bars ? (
+              bars.map((bar, i) => (
+                <Bar
+                  key={i}
+                  dataKey={bar.key}
+                  name={bar.name}
+                  fill={bar.color || theme.palette.primary.main}
+                  radius={[4, 4, 0, 0]}
+                />
+              ))
+            ) : (
+              <Bar 
+                dataKey={dataKey} 
+                fill={color || theme.palette.primary.main}
+                radius={[4, 4, 0, 0]}
+              />
+            )}
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <Alert severity="info">No chart data available</Alert>
+      )}
+    </Box>
+  );
+};
+
+export const LineChartCard = ({ title, data, lines, xAxisKey }) => {
+  const theme = useTheme();
+  return (
+    <Box sx={{ mb: theme.spacing(4), overflow: 'hidden' }}>
+      {title && (
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ mb: theme.spacing(3) }}
+        >
+          {title}
+        </Typography>
+      )}
+      {data?.length ? (
+        <ResponsiveContainer width="100%" height={450}>
+          <LineChart data={data} margin={{ top: 20, right: 50, left: 20, bottom: 80 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <XAxis 
+              dataKey={xAxisKey || "month"} 
+              stroke={theme.palette.text.secondary}
+              angle={-45}
+              textAnchor="end"
+              height={100}
+              interval={'preserveStartEnd'}
+              tick={{ fontSize: 11 }}
+              tickMargin={10}
+            />
+            <YAxis 
+              stroke={theme.palette.text.secondary}
+              width={60}
+              tickFormatter={(value) => value.toFixed(0)}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 4,
+                borderColor: theme.palette.divider,
+                boxShadow: theme.shadows[3],
+              }}
+            />
+            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            {lines?.map((line, i) => (
+              <Line
+                key={i}
+                type="monotone"
+                dataKey={line.key}
+                name={line.name}
+                stroke={line.color || theme.palette.primary.main}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <Alert severity="info">No line chart data available</Alert>
+      )}
+    </Box>
+  );
+};
+
+// ===========================
+// 🥧 9. PIE CHART CARD
+// ===========================
+export const PieChartCard = ({ title, data, nameKey, valueKey, colors }) => {
+  const theme = useTheme();
+  const defaultColors = [
+    theme.palette.primary.main,
+    theme.palette.info.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+  ];
+
+  return (
+    <Box sx={{ mb: theme.spacing(4) }}>
+      {title && (
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ mb: theme.spacing(3) }}
+        >
+          {title}
+        </Typography>
+      )}
+      {data?.length ? (
+        <ResponsiveContainer width="100%" height={380}>
+          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={{ stroke: theme.palette.text.secondary, strokeWidth: 1 }}
+              label={({ name, value, percent }) => 
+                `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+              }
+              outerRadius={100}
+              fill={theme.palette.primary.main}
+              dataKey={valueKey || "value"}
+              nameKey={nameKey || "name"}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={colors?.[index] || defaultColors[index % defaultColors.length]}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                backgroundColor: theme.palette.background.paper,
+                borderRadius: 4,
+                borderColor: theme.palette.divider,
+                boxShadow: theme.shadows[3],
+              }}
+            />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              wrapperStyle={{ paddingTop: '20px' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      ) : (
+        <Alert severity="info">No pie chart data available</Alert>
+      )}
+    </Box>
+  );
+};
+
+// ===========================
+// 📋 10. DATA TABLE
+// ===========================
+export const DataTable = ({ columns, data, emptyMessage }) => {
+  const theme = useTheme();
+  
+  return (
+    <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
+      {data?.length ? (
+        <Table>
+          <TableHead>
+            <TableRow>
+              {columns?.map((col, i) => (
+                <TableCell key={i} sx={{ fontWeight: theme.typography.fontWeightBold }}>
+                  {col.label}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.map((row, rowIndex) => (
+              <TableRow key={rowIndex} hover>
+                {columns.map((col, colIndex) => (
+                  <TableCell key={colIndex}>
+                    {col.render ? col.render(row[col.field], row, rowIndex) : row[col.field]}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <Box p={3}>
+          <Alert severity="info">{emptyMessage || "No data available"}</Alert>
+        </Box>
+      )}
+    </TableContainer>
+  );
+};
+
+// ===========================
+// 🏷️ 11. SUMMARY STATS GRID
+// ===========================
+export const SummaryStatsGrid = ({ stats }) => {
+  const theme = useTheme();
+  
+  return (
+    <Grid container spacing={2} sx={{ mb: theme.spacing(3) }}>
+      {stats?.map((stat, index) => (
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+          <StatCard {...stat} />
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+
+// ===========================
+// 📑 12. TABBED CONTENT
+// ===========================
+export const TabbedContent = ({ tabs, currentTab, setCurrentTab }) => {
+  const theme = useTheme();
+  
+  return (
+    <Box>
+      <Tabs
+        value={currentTab}
+        onChange={(e, newValue) => setCurrentTab(newValue)}
+        sx={{ mb: theme.spacing(3), borderBottom: 1, borderColor: 'divider' }}
+      >
+        {tabs?.map((tab, index) => (
+          <Tab
+            key={index}
+            label={tab.label}
+            icon={tab.icon}
+            iconPosition="start"
+          />
+        ))}
+      </Tabs>
+      
+      {tabs?.map((tab, index) => (
+        <Box key={index} hidden={currentTab !== index}>
+          {currentTab === index && tab.content}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+// ===========================
+// 📊 13. METRICS SUMMARY CARD
+// ===========================
+export const MetricsSummaryCard = ({ title, metrics, icon: Icon }) => {
+  const theme = useTheme();
+  
+  return (
+    <Paper sx={{ p: theme.spacing(3), borderRadius: 4 }}>
+      <Box display="flex" alignItems="center" mb={2}>
+        {Icon && <Icon sx={{ mr: 1, color: theme.palette.primary.main }} />}
+        <Typography variant="h6" fontWeight={theme.typography.h6.fontWeight}>
+          {title}
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        {metrics?.map((metric, index) => (
+          <Grid size={{ xs: 6, md: 3 }} key={index}>
+            <MetricBox {...metric} />
+          </Grid>
+        ))}
+      </Grid>
+    </Paper>
+  );
+};
