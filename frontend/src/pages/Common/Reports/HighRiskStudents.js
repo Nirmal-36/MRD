@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { Warning, LocalHospital } from "@mui/icons-material";
 import apiService from "../../../services/api";
+import { PatientExportButton } from "../../../components/exports";
 import {
   PageHeader,
   LoadingState,
@@ -102,6 +103,7 @@ const HighRiskStudents = ({ department = null }) => {
         subtitle="Students requiring special attention due to health conditions"
         icon={Warning}
         department={department}
+        exportButton={<PatientExportButton sx={{ color: 'white', '& .MuiButton-root': { color: 'white' } }} />}
       />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>

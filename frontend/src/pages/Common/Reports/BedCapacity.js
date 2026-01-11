@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Paper, Grid, useTheme, Chip } from "@mui/material";
 import { Hotel, Timeline } from "@mui/icons-material";
 import apiService from "../../../services/api";
+import { BedExportButton } from "../../../components/exports";
 import {
   PageHeader,
   DateRangeFilter,
@@ -126,6 +127,7 @@ const BedCapacity = ({ department = null }) => {
         subtitle="Real-time bed occupancy status and patient admissions"
         icon={Hotel}
         department={department}
+        exportButton={<BedExportButton sx={{ color: 'white', '& .MuiButton-root': { color: 'white' } }} />}
       />
 
       <DateRangeFilter

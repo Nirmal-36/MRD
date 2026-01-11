@@ -25,6 +25,7 @@ import {
   Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { MedicineExportButton } from '../../components/exports';
 
 const LowStock = () => {
   const theme = useTheme();
@@ -91,9 +92,12 @@ const LowStock = () => {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight} mb={theme.spacing(3)}>
-        Low Stock Alerts
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(3)}>
+        <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+          Low Stock Alerts
+        </Typography>
+        <MedicineExportButton />
+      </Box>
 
       {error && (
         <Alert severity="error" onClose={() => setError('')} sx={{ mb: theme.spacing(3) }}>

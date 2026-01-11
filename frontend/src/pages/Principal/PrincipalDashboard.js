@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/api";
+import { MasterExportButton } from "../../components/exports";
 
 import {
   PageHeader,
@@ -104,16 +105,12 @@ const PrincipalDashboard = () => {
   return (
     <Box>
       {/* ===== Page Header ===== */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <PageHeader
-            title="Principal Dashboard"
-            subtitle="Institution-wide overview and key performance indicators"
-          />
-        </Box>
-      </Box>
+      <PageHeader
+        title="Principal Dashboard"
+        subtitle="Institution-wide overview and key performance indicators"
+      />
 
-      {/* ===== Quick Stats ===== */}
+      {/* ===== Quick Stats with Export Button ===== */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
@@ -140,12 +137,25 @@ const PrincipalDashboard = () => {
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            label="Bed Occupancy"
-            value={`${quickStats.bedOccupancy}%`}
-            icon={Hotel}
-            gradient={`linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.info.light} 100%)`}
-          />
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 1,
+              p: 2,
+              borderRadius: 4,
+              background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+              color: 'white',
+            }}
+          >
+            <Typography variant="body2" fontWeight="medium" align="center">
+              Export All Reports
+            </Typography>
+            <MasterExportButton />
+          </Box>
         </Grid>
       </Grid>
 

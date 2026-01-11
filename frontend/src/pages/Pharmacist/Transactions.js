@@ -27,6 +27,7 @@ import {
   Remove as RemoveIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { MedicineExportButton } from '../../components/exports';
 
 const Transactions = () => {
   const theme = useTheme();
@@ -115,11 +116,14 @@ const Transactions = () => {
         <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
           Medicine Transactions
         </Typography>
-        <Tooltip title="Refresh">
-          <IconButton onClick={fetchTransactions} color="primary">
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
+        <Box display="flex" gap={1}>
+          <MedicineExportButton transactionFilters={filters} />
+          <Tooltip title="Refresh">
+            <IconButton onClick={fetchTransactions} color="primary">
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {error && (

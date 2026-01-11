@@ -12,6 +12,7 @@ import {
   CalendarToday as CalendarIcon
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { PatientExportButton } from '../../components/exports';
 
 const PatientDashboard = () => {
   const theme = useTheme();
@@ -74,22 +75,24 @@ const PatientDashboard = () => {
 
   return (
     <Box p={{ xs: 2, sm: 3 }}>
-      <Box mb={3}>
-        <Typography 
-          variant="h4" 
-          fontWeight={theme.typography.h4.fontWeight}
-        >
-          My Medical Profile
-        </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box>
+          <Typography 
+            variant="h4" 
+            fontWeight={theme.typography.h4.fontWeight}
+          >
+            My Medical Profile
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color="textSecondary" 
+            sx={{ fontSize: { xs: '0.875rem', sm: '0.95rem' } }}
+          >
+            View your medical records, treatments, and prescriptions
+          </Typography>
+        </Box>
+        <PatientExportButton patient_id={patient?.id} />
       </Box>
-      <Typography 
-        variant="body2" 
-        color="textSecondary" 
-        gutterBottom
-        sx={{ fontSize: { xs: '0.875rem', sm: '0.95rem' } }}
-      >
-        View your medical records, treatments, and prescriptions
-      </Typography>
 
       {/* Statistics Cards */}
       <Grid container spacing={{ xs: 2, sm: 3 }} mb={{ xs: 2, sm: 3 }} mt={{ xs: 0.5, sm: 1 }}>

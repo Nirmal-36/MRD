@@ -30,6 +30,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { MedicineExportButton } from '../../components/exports';
 
 const StockRequests = () => {
   const theme = useTheme();
@@ -128,9 +129,12 @@ const StockRequests = () => {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight} mb={theme.spacing(3)}>
-        Stock Requests Management
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(3)}>
+        <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+          Stock Requests Management
+        </Typography>
+        <MedicineExportButton />
+      </Box>
 
       {error && (
         <Alert severity="error" onClose={() => setError('')} sx={{ mb: theme.spacing(2) }}>

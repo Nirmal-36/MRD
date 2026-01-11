@@ -33,6 +33,7 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { PatientExportButton } from '../../components/exports';
 
 const Patients = () => {
   const theme = useTheme();
@@ -207,14 +208,17 @@ const Patients = () => {
         <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
           Patient Management
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-          size="large"
-        >
-          Add Patient Medical Record
-        </Button>
+        <Box display="flex" gap={2}>
+          <PatientExportButton />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+            size="large"
+          >
+            Add Patient Medical Record
+          </Button>
+        </Box>
       </Box>
 
       {/* Info Alert */}

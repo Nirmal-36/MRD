@@ -33,6 +33,7 @@ import {
   ExitToApp as DischargeIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { BedExportButton } from '../../components/exports';
 
 const Beds = () => {
   const theme = useTheme();
@@ -240,9 +241,12 @@ const Beds = () => {
   return (
     <Box>
       {/* Header */}
-      <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight} mb={theme.spacing(3)}>
-        Bed Management
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(3)}>
+        <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+          Bed Management
+        </Typography>
+        <BedExportButton />
+      </Box>
 
       {/* Alerts */}
       {error && (

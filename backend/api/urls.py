@@ -12,6 +12,17 @@ from .common_reports import (
     critical_stock_status, inventory_expiry_report,
     pending_stock_requests_summary, bed_capacity_report
 )
+# Export views
+from .export_patients import export_patients, export_treatments, export_high_risk_patients
+from .export_medicines import (
+    export_medicine_inventory, export_low_stock_medicines,
+    export_expiring_medicines, export_medicine_transactions, export_stock_requests
+)
+from .export_beds import export_bed_allocations, export_bed_inventory, export_current_patients
+from .export_others import (
+    export_cleaning_records, export_staff_directory,
+    export_student_directory, export_employee_directory
+)
 from django.views.decorators.csrf import csrf_exempt
 
 router = DefaultRouter()
@@ -55,4 +66,27 @@ urlpatterns = [
     path('common-reports/inventory-expiry/', inventory_expiry_report, name='common-expiry'),
     path('common-reports/pending-requests/', pending_stock_requests_summary, name='common-pending-requests'),
     path('common-reports/bed-capacity/', bed_capacity_report, name='common-bed-capacity'),
+    
+    # Export Endpoints - Patients
+    path('export/patients/', export_patients, name='export-patients'),
+    path('export/treatments/', export_treatments, name='export-treatments'),
+    path('export/high-risk-patients/', export_high_risk_patients, name='export-high-risk-patients'),
+    
+    # Export Endpoints - Medicines
+    path('export/medicine-inventory/', export_medicine_inventory, name='export-medicine-inventory'),
+    path('export/low-stock-medicines/', export_low_stock_medicines, name='export-low-stock'),
+    path('export/expiring-medicines/', export_expiring_medicines, name='export-expiring'),
+    path('export/medicine-transactions/', export_medicine_transactions, name='export-transactions'),
+    path('export/stock-requests/', export_stock_requests, name='export-stock-requests'),
+    
+    # Export Endpoints - Beds
+    path('export/bed-allocations/', export_bed_allocations, name='export-bed-allocations'),
+    path('export/bed-inventory/', export_bed_inventory, name='export-bed-inventory'),
+    path('export/current-patients/', export_current_patients, name='export-current-patients'),
+    
+    # Export Endpoints - Others
+    path('export/cleaning-records/', export_cleaning_records, name='export-cleaning'),
+    path('export/staff-directory/', export_staff_directory, name='export-staff'),
+    path('export/student-directory/', export_student_directory, name='export-students'),
+    path('export/employee-directory/', export_employee_directory, name='export-employees'),
 ]

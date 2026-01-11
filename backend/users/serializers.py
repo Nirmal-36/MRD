@@ -50,9 +50,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         user = self.instance
+        if not user:
+            raise serializers.ValidationError('User instance is required.')
+        
         user_type = user.user_type  # Can't change user_type in update
-        employee_id = data.get('employee_id', user.employee_id)
-        student_id = data.get('student_id', user.student_id)
+        employee_id = data.get('employee_id', user.employee_id if user.employee_id else None)
+        student_id = data.get('student_id', user.student_id if user.student_id else None)
         
         # Validate ID fields based on user type
         if user_type == 'student':
@@ -93,7 +96,8 @@ class LoginSerializer(serializers.Serializer):
             user = authenticate(username=username, password=password)
             if user:
                 if not user.is_active:
-                    if not user.is_approved:
+                    # Check if user has is_approved attribute (for custom User model)
+                    if hasattr(user, 'is_approved') and not user.is_approved:  # type: ignore[attr-defined]
                         raise serializers.ValidationError('Your account is pending admin approval. Please wait for approval to access the system.')
                     raise serializers.ValidationError('User account is disabled.')
                 data['user'] = user

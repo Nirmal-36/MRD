@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Paper, Grid, useTheme } from "@mui/material";
 import { Inventory, TrendingUp } from "@mui/icons-material";
 import apiService from "../../../services/api";
+import { MedicineExportButton } from "../../../components/exports";
 import {
   PageHeader,
   DateRangeFilter,
@@ -138,6 +139,7 @@ const InventoryManagement = ({ department = null }) => {
         subtitle="Critical stock levels and medicine usage analytics"
         icon={Inventory}
         department={department}
+        exportButton={<MedicineExportButton sx={{ color: 'white', '& .MuiButton-root': { color: 'white' } }} />}
       />
 
       <DateRangeFilter

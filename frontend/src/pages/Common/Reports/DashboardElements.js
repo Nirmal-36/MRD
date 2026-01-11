@@ -44,7 +44,7 @@ import {
 // ===========================
 // ⏫ 1. PAGE HEADER
 // ===========================
-export const PageHeader = ({ title, subtitle, icon: Icon, department }) => {
+export const PageHeader = ({ title, subtitle, icon: Icon, department, exportButton }) => {
   const theme = useTheme();
   return (
     <Paper
@@ -67,15 +67,18 @@ export const PageHeader = ({ title, subtitle, icon: Icon, department }) => {
             {subtitle}
           </Typography>
         </Box>
-        {department && (
-          <Chip
-            icon={<Business />}
-            label={`Department: ${department}`}
-            color="secondary"
-            size="small"
-            sx={{ bgcolor: "action.selected", color: "inherit" }}
-          />
-        )}
+        <Box display="flex" gap={1} alignItems="center">
+          {exportButton}
+          {department && (
+            <Chip
+              icon={<Business />}
+              label={`Department: ${department}`}
+              color="secondary"
+              size="small"
+              sx={{ bgcolor: "action.selected", color: "inherit" }}
+            />
+          )}
+        </Box>
       </Box>
     </Paper>
   );

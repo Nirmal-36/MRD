@@ -137,6 +137,26 @@ const apiService = {
   getAvailableDoctors: () => apiClient.get(`${API_ENDPOINTS.USERS}doctors/`),
   approveStaff: (data) => apiClient.post(API_ENDPOINTS.APPROVE_STAFF, data),
 
+  // Export Functions - Returns file download
+  exportPatients: () => apiClient.get('/export/patients/', { responseType: 'blob' }),
+  exportTreatments: (params) => apiClient.get('/export/treatments/', { params, responseType: 'blob' }),
+  exportHighRiskPatients: () => apiClient.get('/export/high-risk-patients/', { responseType: 'blob' }),
+  
+  exportMedicineInventory: () => apiClient.get('/export/medicine-inventory/', { responseType: 'blob' }),
+  exportLowStockMedicines: () => apiClient.get('/export/low-stock-medicines/', { responseType: 'blob' }),
+  exportExpiringMedicines: (params) => apiClient.get('/export/expiring-medicines/', { params, responseType: 'blob' }),
+  exportMedicineTransactions: (params) => apiClient.get('/export/medicine-transactions/', { params, responseType: 'blob' }),
+  exportStockRequests: (params) => apiClient.get('/export/stock-requests/', { params, responseType: 'blob' }),
+  
+  exportBedAllocations: (params) => apiClient.get('/export/bed-allocations/', { params, responseType: 'blob' }),
+  exportBedInventory: () => apiClient.get('/export/bed-inventory/', { responseType: 'blob' }),
+  exportCurrentPatients: () => apiClient.get('/export/current-patients/', { responseType: 'blob' }),
+  
+  exportCleaningRecords: (params) => apiClient.get('/export/cleaning-records/', { params, responseType: 'blob' }),
+  exportStaffDirectory: () => apiClient.get('/export/staff-directory/', { responseType: 'blob' }),
+  exportStudentDirectory: () => apiClient.get('/export/student-directory/', { responseType: 'blob' }),
+  exportEmployeeDirectory: () => apiClient.get('/export/employee-directory/', { responseType: 'blob' }),
+
 };
 
 export default apiService;

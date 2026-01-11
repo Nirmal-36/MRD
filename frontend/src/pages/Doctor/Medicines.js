@@ -12,6 +12,7 @@ import {
   ShoppingCart as RequestIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
+import { MedicineExportButton } from '../../components/exports';
 
 const Medicines = () => {
   const theme = useTheme();
@@ -124,6 +125,7 @@ const Medicines = () => {
         <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
           Medicine Inventory
         </Typography>
+        <MedicineExportButton />
       </Box>
 
       {/* Alerts */}

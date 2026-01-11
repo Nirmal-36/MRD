@@ -34,6 +34,7 @@ import {
 import { format } from 'date-fns';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { PatientExportButton } from '../../components/exports';
 
 const Treatments = () => {
   const theme = useTheme();
@@ -324,14 +325,17 @@ const Treatments = () => {
         <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
           Treatment Records
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-          size="large"
-        >
-          Add Treatment
-        </Button>
+        <Box display="flex" gap={2}>
+          <PatientExportButton />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+            size="large"
+          >
+            Add Treatment
+          </Button>
+        </Box>
       </Box>
 
       {/* Alerts */}

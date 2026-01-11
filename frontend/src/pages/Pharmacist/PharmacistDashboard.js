@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../../services/api';
+import { MedicineExportButton } from '../../components/exports';
 
 const PharmacistDashboard = () => {
   const theme = useTheme();
@@ -115,9 +116,12 @@ const PharmacistDashboard = () => {
   return (
     <Box>
       {/* Header */}
-      <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight} mb={theme.spacing(3)}>
-        Pharmacist Dashboard
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(3)}>
+        <Typography variant="h4" fontWeight={theme.typography.h4.fontWeight}>
+          Pharmacist Dashboard
+        </Typography>
+        <MedicineExportButton />
+      </Box>
 
       {error && (
         <Alert severity="error" onClose={() => setError('')} sx={{ mb: theme.spacing(3) }}>
