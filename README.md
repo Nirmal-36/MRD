@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/klh-medcare-logo.svg" alt="KLH MedCare Logo" width="300"/>
+  <img src="frontend/public/klh-university-logo.png" alt="KLH MedCare Logo" width="300"/>
   
   # KLH MedCare
   ### Healthcare Management Platform for KL University Hospital
