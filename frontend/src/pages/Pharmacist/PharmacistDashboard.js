@@ -131,7 +131,7 @@ const PharmacistDashboard = () => {
 
       {/* Statistics Cards */}
       <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -149,7 +149,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -170,7 +170,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -191,7 +191,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -215,7 +215,7 @@ const PharmacistDashboard = () => {
 
       {/* Quick Actions */}
       <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
-        <Grid size={{ xs: 12 }}>
+        <Grid item xs={12}>
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={theme.typography.h6.fontWeight} mb={theme.spacing(2)}>
@@ -263,7 +263,7 @@ const PharmacistDashboard = () => {
       {/* Pending Requests Section */}
       {dashboardData.pendingRequestsList.length > 0 && (
         <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(2)}>
@@ -322,7 +322,7 @@ const PharmacistDashboard = () => {
       {/* Low Stock Medicines */}
       {dashboardData.lowStockMedicines.length > 0 && (
         <Grid container spacing={theme.spacing(3)}>
-          <Grid size={{ xs: 12 }}>
+          <Grid item xs={12}>
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(2)}>

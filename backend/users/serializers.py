@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import User
+from .models import User, ProfileChangeRequest
 from .otp_utils import verify_otp
 from .validators import (
     validate_indian_phone, validate_klh_email, validate_otp_format,
@@ -438,3 +438,112 @@ class MedicalStaffApprovalSerializer(serializers.ModelSerializer):
             validated_data['approved_at'] = timezone.now()
         
         return super().update(instance, validated_data)
+
+
+class ProfileChangeRequestSerializer(serializers.ModelSerializer):
+    """Serializer for profile change requests"""
+    user_info = serializers.SerializerMethodField(read_only=True)
+    reviewed_by_name = serializers.CharField(source='reviewed_by.get_full_name', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = ProfileChangeRequest
+        fields = [
+            'id', 'user', 'user_info',
+            'current_first_name', 'current_last_name', 'current_username',
+            'requested_first_name', 'requested_last_name', 'requested_username',
+            'reason', 'status', 'status_display',
+            'reviewed_by', 'reviewed_by_name', 'reviewed_at', 'admin_notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'user', 'current_first_name', 'current_last_name', 'current_username',
+            'reviewed_by', 'reviewed_at', 'created_at', 'updated_at'
+        ]
+    
+    def get_user_info(self, obj):
+        return {
+            'username': obj.user.username,
+            'full_name': obj.user.get_full_name(),
+            'email': obj.user.email,
+            'user_type': obj.user.get_user_type_display(),
+            'display_id': obj.user.get_display_id()
+        }
+
+
+class ProfileChangeRequestCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating a new profile change request"""
+    
+    class Meta:
+        model = ProfileChangeRequest
+        fields = [
+            'requested_first_name', 'requested_last_name', 
+            'requested_username', 'reason'
+        ]
+    
+    def validate(self, data):
+        """Validate that at least one field is being requested to change"""
+        user = self.context['request'].user
+        
+        # Check if at least one field is different from current
+        first_name_changed = data.get('requested_first_name') and data.get('requested_first_name') != user.first_name
+        last_name_changed = data.get('requested_last_name') and data.get('requested_last_name') != user.last_name
+        username_changed = data.get('requested_username') and data.get('requested_username') != user.username
+        
+        if not (first_name_changed or last_name_changed or username_changed):
+            raise serializers.ValidationError(
+                'At least one field (first name, last name, or username) must be different from your current value.'
+            )
+        
+        # Validate username uniqueness if changing
+        if username_changed:
+            if User.objects.filter(username=data['requested_username']).exclude(id=user.id).exists():
+                raise serializers.ValidationError({
+                    'requested_username': 'This username is already taken.'
+                })
+        
+        # Check if user has pending request
+        if ProfileChangeRequest.objects.filter(user=user, status='pending').exists():
+            raise serializers.ValidationError(
+                'You already have a pending profile change request. Please wait for it to be reviewed.'
+            )
+        
+        # Validate reason is provided
+        if not data.get('reason', '').strip():
+            raise serializers.ValidationError({
+                'reason': 'Please provide a reason for requesting this change.'
+            })
+        
+        return data
+    
+    def create(self, validated_data):
+        user = self.context['request'].user
+        
+        # Set current values
+        validated_data['user'] = user
+        validated_data['current_first_name'] = user.first_name
+        validated_data['current_last_name'] = user.last_name
+        validated_data['current_username'] = user.username
+        
+        # Set empty requested fields to current values if not provided
+        if not validated_data.get('requested_first_name'):
+            validated_data['requested_first_name'] = user.first_name
+        if not validated_data.get('requested_last_name'):
+            validated_data['requested_last_name'] = user.last_name
+        if not validated_data.get('requested_username'):
+            validated_data['requested_username'] = user.username
+        
+        return super().create(validated_data)
+
+
+class ProfileChangeRequestActionSerializer(serializers.Serializer):
+    """Serializer for admin to approve/reject a change request"""
+    action = serializers.ChoiceField(choices=['approve', 'reject'], required=True)
+    admin_notes = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate(self, data):
+        if data['action'] == 'reject' and not data.get('admin_notes', '').strip():
+            raise serializers.ValidationError({
+                'admin_notes': 'Please provide a reason for rejecting this request.'
+            })
+        return data

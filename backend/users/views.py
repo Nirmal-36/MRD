@@ -7,12 +7,14 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
 from typing import Union
-from .models import User
+from .models import User, ProfileChangeRequest
 from .serializers import (
     UserSerializer, UserUpdateSerializer, LoginSerializer, 
     ChangePasswordSerializer, UserRegistrationSerializer,
     PatientRegistrationSerializer, MedicalStaffApprovalSerializer,
-    ForgotPasswordSerializer, ResetPasswordSerializer, VerifyOTPSerializer
+    ForgotPasswordSerializer, ResetPasswordSerializer, VerifyOTPSerializer,
+    ProfileChangeRequestSerializer, ProfileChangeRequestCreateSerializer,
+    ProfileChangeRequestActionSerializer
 )
 from .permissions import (
     IsAdminUser, IsMedicalStaff, PatientRestrictedViewPermission
@@ -510,3 +512,205 @@ class UserViewSet(viewsets.ModelViewSet):
                 for code, name in User.ACADEMIC_DEPARTMENTS
             ]
         })
+
+
+class ProfileChangeRequestViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for handling profile change requests
+    
+    Users can:
+    - Create new requests
+    - View their own requests
+    - Cancel their pending requests
+    
+    Admins can:
+    - View all requests
+    - Approve/reject requests
+    """
+    queryset = ProfileChangeRequest.objects.all().select_related('user', 'reviewed_by')
+    permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ProfileChangeRequestCreateSerializer
+        elif self.action in ['approve', 'reject']:
+            return ProfileChangeRequestActionSerializer
+        return ProfileChangeRequestSerializer
+    
+    def get_queryset(self):
+        """
+        Filter queryset based on user role
+        - Regular users see only their own requests
+        - Admins see all requests
+        """
+        user = self.request.user
+        
+        if user.user_type == 'admin':
+            # Admins can see all requests
+            queryset = ProfileChangeRequest.objects.all()
+        else:
+            # Regular users see only their own requests
+            queryset = ProfileChangeRequest.objects.filter(user=user)
+        
+        # Add filter by status if provided
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        return queryset.select_related('user', 'reviewed_by').order_by('-created_at')
+    
+    def create(self, request, *args, **kwargs):
+        """Create a new profile change request"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Return full details of the created request
+        instance = serializer.instance
+        response_serializer = ProfileChangeRequestSerializer(instance)
+        
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+    
+    def update(self, request, *args, **kwargs):
+        """Users cannot update requests - only cancel or admin can approve/reject"""
+        return Response(
+            {'error': 'Profile change requests cannot be updated directly. Use the cancel, approve, or reject actions.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Users cannot partially update requests"""
+        return self.update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Users can only delete their own pending requests (cancel)"""
+        instance = self.get_object()
+        
+        # Only allow deletion of own pending requests
+        if instance.user != request.user:
+            return Response(
+                {'error': 'You can only cancel your own requests.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if instance.status != 'pending':
+            return Response(
+                {'error': 'Only pending requests can be cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        instance.delete()
+        return Response(
+            {'message': 'Profile change request cancelled successfully.'},
+            status=status.HTTP_204_NO_CONTENT
+        )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def approve(self, request, pk=None):
+        """Approve a profile change request (Admin only)"""
+        # Check admin permission
+        if request.user.user_type != 'admin':
+            return Response(
+                {'error': 'Only administrators can approve profile change requests.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        instance = self.get_object()
+        
+        # Check if request is already processed
+        if instance.status != 'pending':
+            return Response(
+                {'error': f'This request has already been {instance.status}.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get admin notes
+        admin_notes = request.data.get('admin_notes', '')
+        
+        try:
+            # Approve the request (this updates the user's profile)
+            instance.approve(request.user, admin_notes)
+            
+            serializer = ProfileChangeRequestSerializer(instance)
+            return Response({
+                'message': 'Profile change request approved successfully.',
+                'request': serializer.data
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        """Reject a profile change request (Admin only)"""
+        # Check admin permission
+        if request.user.user_type != 'admin':
+            return Response(
+                {'error': 'Only administrators can reject profile change requests.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        instance = self.get_object()
+        
+        # Check if request is already processed
+        if instance.status != 'pending':
+            return Response(
+                {'error': f'This request has already been {instance.status}.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get admin notes (required for rejection)
+        admin_notes = request.data.get('admin_notes', '').strip()
+        if not admin_notes:
+            return Response(
+                {'error': 'Please provide a reason for rejecting this request.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Reject the request
+            instance.reject(request.user, admin_notes)
+            
+            serializer = ProfileChangeRequestSerializer(instance)
+            return Response({
+                'message': 'Profile change request rejected.',
+                'request': serializer.data
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def pending(self, request):
+        """Get all pending requests (Admin only)"""
+        if request.user.user_type != 'admin':
+            # For non-admin users, return their own pending requests
+            pending = ProfileChangeRequest.objects.filter(
+                user=request.user,
+                status='pending'
+            ).select_related('user', 'reviewed_by')
+        else:
+            # Admins see all pending requests
+            pending = ProfileChangeRequest.objects.filter(
+                status='pending'
+            ).select_related('user', 'reviewed_by')
+        
+        serializer = ProfileChangeRequestSerializer(pending, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_requests(self, request):
+        """Get current user's profile change requests"""
+        requests = ProfileChangeRequest.objects.filter(
+            user=request.user
+        ).select_related('user', 'reviewed_by').order_by('-created_at')
+        
+        serializer = ProfileChangeRequestSerializer(requests, many=True)
+        return Response(serializer.data)

@@ -17,7 +17,7 @@ import {
 const drawerWidth = 240;
 
 const Sidebar = ({ 
-  title = "MRD System", 
+  title = "KLH MedCare", 
   menuItems, 
   mobileOpen, 
   onDrawerToggle,
@@ -63,10 +63,10 @@ const Sidebar = ({
       >
         <Box
           component="img"
-          src="/klh-logo.jpg"
-          alt="KL University Logo"
+          src="/klh-university-logo.png"
+          alt="KLH MedCare"
           sx={{
-            height: { xs: 32, sm: 40 },
+            height: { xs: 40, sm: 50 },
             width: 'auto',
             objectFit: 'contain',
           }}

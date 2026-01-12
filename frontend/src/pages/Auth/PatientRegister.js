@@ -16,7 +16,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import PasswordStrengthIndicator from '../../components/common/PasswordStrengthIndicator';
-import { PersonAdd as RegisterIcon } from '@mui/icons-material';
 
 const PatientRegister = () => {
   const navigate = useNavigate();
@@ -109,7 +108,7 @@ const PatientRegister = () => {
     const result = await patientRegister(formData);
 
     if (result.success) {
-      showSuccess('Registration successful! Welcome to MRD System.');
+      showSuccess('Registration successful! Welcome to KLH MedCare.');
       setTimeout(() => {
         navigate('/patient');
       }, 1000);
@@ -149,12 +148,23 @@ const PatientRegister = () => {
           }}
         >
           <Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 4 } }}>
-            <RegisterIcon sx={{ fontSize: { xs: 50, sm: 60 }, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
+            <Box
+              component="img"
+              src="/klh-university-logo.png"
+              alt="KLH MedCare"
+              sx={{
+                height: { xs: 90, sm: 100 },
+                width: 'auto',
+                mb: 2,
+                mx: 'auto',
+                display: 'block',
+              }}
+            />
+            <Typography variant="h5" component="h1" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' }, fontWeight: 600 }}>
               Patient Registration
             </Typography>
             <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-              Register to access medical services
+              Register to access KLH MedCare services
             </Typography>
           </Box>
 

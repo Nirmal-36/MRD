@@ -433,7 +433,7 @@ const Treatments = () => {
           <Box sx={{ mt: theme.spacing(2) }}>
             <Grid container spacing={theme.spacing(2)}>
               {/* Patient Selection */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <Autocomplete
                   fullWidth
                   options={patients}
@@ -468,7 +468,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Visit Date & Time and Severity */}
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Visit Date & Time"
@@ -480,7 +480,7 @@ const Treatments = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   select
@@ -497,7 +497,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Symptoms */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Symptoms"
@@ -511,7 +511,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Diagnosis */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Diagnosis"
@@ -525,7 +525,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Treatment Given */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Treatment Given"
@@ -539,7 +539,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Follow-up Date */}
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Follow-up Date"
@@ -554,12 +554,12 @@ const Treatments = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid item xs={12} sm={6}>
                 {/* Empty space for layout */}
               </Grid>
 
               {/* Medicines Prescription */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 {medicines.length > 0 ? (
                   <>
                     <Autocomplete
@@ -633,7 +633,7 @@ const Treatments = () => {
                           }}
                         >
                           <Grid container spacing={theme.spacing(2)} alignItems="center">
-                            <Grid size={{ xs: 12 }}>
+                            <Grid item xs={12}>
                               <Typography variant="body2" fontWeight="bold">
                                 {index + 1}. {medicine.name} ({medicine.generic_name})
                               </Typography>
@@ -642,7 +642,7 @@ const Treatments = () => {
                               </Typography>
                             </Grid>
                             
-                            <Grid size={{ xs: 12, sm: 3 }}>
+                            <Grid item xs={12} sm={3}>
                               <TextField
                                 fullWidth
                                 type="number"
@@ -654,7 +654,7 @@ const Treatments = () => {
                                 required
                               />
                             </Grid>
-                            <Grid size={{ xs: 12, sm: 6 }}>
+                            <Grid item xs={12} sm={6}>
                               <TextField
                                 fullWidth
                                 label="Dosage Instructions"
@@ -665,7 +665,7 @@ const Treatments = () => {
                                 required
                               />
                             </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }}>
+                            <Grid item xs={12} sm={3}>
                               <TextField
                                 fullWidth
                                 type="number"
@@ -690,7 +690,7 @@ const Treatments = () => {
               </Grid>
 
               {/* Additional Notes */}
-              <Grid size={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Additional Notes"
@@ -724,17 +724,17 @@ const Treatments = () => {
           {selectedTreatment && (
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary">Patient</Typography>
                   <Typography variant="body1">{selectedTreatment.patient_name}</Typography>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid item xs={6}>
                   <Typography variant="subtitle2" color="textSecondary">Visit Date</Typography>
                   <Typography variant="body1">
                     {selectedTreatment.visit_date ? format(new Date(selectedTreatment.visit_date), 'MMM dd, yyyy HH:mm') : 'N/A'}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid item xs={6}>
                   <Typography variant="subtitle2" color="textSecondary">Severity</Typography>
                   <Chip
                     label={selectedTreatment.severity.toUpperCase()}
@@ -742,19 +742,19 @@ const Treatments = () => {
                     color={getSeverityColor(selectedTreatment.severity)}
                   />
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary">Symptoms</Typography>
                   <Typography variant="body1">{selectedTreatment.symptoms}</Typography>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary">Diagnosis</Typography>
                   <Typography variant="body1">{selectedTreatment.diagnosis}</Typography>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary">Treatment Given</Typography>
                   <Typography variant="body1">{selectedTreatment.treatment_given}</Typography>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary" gutterBottom>Medicines Prescribed</Typography>
                   {prescribedMedicines.length > 0 ? (
                     <Box>
@@ -785,13 +785,13 @@ const Treatments = () => {
                     <Typography variant="body1" color="textSecondary">None prescribed</Typography>
                   )}
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid item xs={6}>
                   <Typography variant="subtitle2" color="textSecondary">Follow-up Date</Typography>
                   <Typography variant="body1">
                     {selectedTreatment.follow_up_date ? format(new Date(selectedTreatment.follow_up_date), 'MMM dd, yyyy') : 'N/A'}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
+                <Grid item xs={12}>
                   <Typography variant="subtitle2" color="textSecondary">Additional Notes</Typography>
                   <Typography variant="body1">{selectedTreatment.notes || 'None'}</Typography>
                 </Grid>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -109,7 +109,7 @@ export const DateRangeFilter = ({
         <Grid>
           <CalendarToday color="primary" />
         </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
+        <Grid item xs={12} sm={3}>
           <TextField
             label="Start Date"
             type="date"
@@ -120,7 +120,7 @@ export const DateRangeFilter = ({
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
+        <Grid item xs={12} sm={3}>
           <TextField
             label="End Date"
             type="date"
@@ -204,7 +204,7 @@ export const StatCard = ({ label, value, icon: Icon, gradient }) => {
 // ===========================
 // 📈 6. METRIC BOX
 // ===========================
-export const MetricBox = ({ label, value, color }) => {
+export const MetricBox = ({ label, value, color, description }) => {
   const theme = useTheme();
   return (
     <Paper
@@ -225,6 +225,11 @@ export const MetricBox = ({ label, value, color }) => {
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
+      {description && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+          {description}
+        </Typography>
+      )}
     </Paper>
   );
 };
@@ -271,61 +276,62 @@ export const ReportCard = ({ title, subtitle, icon: Icon, color, onClick }) => {
 export const BarChartCard = ({ title, data, dataKey, nameKey, color, bars }) => {
   const theme = useTheme();  
   return (
-    <Box sx={{ mb: theme.spacing(4), overflow: 'hidden' }}>
+    <Box sx={{ width: '100%' }}>
       {title && (
         <Typography
-          variant="subtitle1"
-          fontWeight="bold"
+          variant="h6"
+          fontWeight={theme.typography.h6.fontWeight}
           gutterBottom
-          sx={{ mb: theme.spacing(3) }}
+          sx={{ mb: 2 }}
         >
           {title}
         </Typography>
       )}
       {data?.length ? (
-        <ResponsiveContainer width="100%" height={450}>
-          <BarChart data={data} margin={{ top: 20, right: 50, left: 20, bottom: 80 }}>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 10, bottom: 60 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis
               dataKey={nameKey || "month"}
               stroke={theme.palette.text.secondary}
               angle={-45}
               textAnchor="end"
-              height={100}
-              interval={'preserveStartEnd'}
-              tick={{ fontSize: 11 }}
-              tickMargin={10}
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
             />
             <YAxis 
               stroke={theme.palette.text.secondary}
-              width={60}
-              tickFormatter={(value) => value.toFixed(0)}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: theme.palette.background.paper,
-                borderRadius: 4,
-                borderColor: theme.palette.divider,
+                borderRadius: 8,
+                border: `1px solid ${theme.palette.divider}`,
                 boxShadow: theme.shadows[3],
               }}
             />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            <Legend 
+              wrapperStyle={{ paddingTop: '10px' }}
+              iconType="circle"
+            />
             {/* Support multiple bars */}
             {bars ? (
               bars.map((bar, i) => (
                 <Bar
                   key={i}
-                  dataKey={bar.key}
+                  dataKey={bar.dataKey}
                   name={bar.name}
-                  fill={bar.color || theme.palette.primary.main}
-                  radius={[4, 4, 0, 0]}
+                  fill={bar.fill || bar.color || theme.palette.primary.main}
+                  radius={[8, 8, 0, 0]}
                 />
               ))
             ) : (
               <Bar 
                 dataKey={dataKey} 
                 fill={color || theme.palette.primary.main}
-                radius={[4, 4, 0, 0]}
+                radius={[8, 8, 0, 0]}
               />
             )}
           </BarChart>
@@ -340,55 +346,56 @@ export const BarChartCard = ({ title, data, dataKey, nameKey, color, bars }) => 
 export const LineChartCard = ({ title, data, lines, xAxisKey }) => {
   const theme = useTheme();
   return (
-    <Box sx={{ mb: theme.spacing(4), overflow: 'hidden' }}>
+    <Box sx={{ width: '100%' }}>
       {title && (
         <Typography
-          variant="subtitle1"
-          fontWeight="bold"
+          variant="h6"
+          fontWeight={theme.typography.h6.fontWeight}
           gutterBottom
-          sx={{ mb: theme.spacing(3) }}
+          sx={{ mb: 2 }}
         >
           {title}
         </Typography>
       )}
       {data?.length ? (
-        <ResponsiveContainer width="100%" height={450}>
-          <LineChart data={data} margin={{ top: 20, right: 50, left: 20, bottom: 80 }}>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={data} margin={{ top: 20, right: 30, left: 10, bottom: 60 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis 
               dataKey={xAxisKey || "month"} 
               stroke={theme.palette.text.secondary}
               angle={-45}
               textAnchor="end"
-              height={100}
-              interval={'preserveStartEnd'}
-              tick={{ fontSize: 11 }}
-              tickMargin={10}
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
             />
             <YAxis 
               stroke={theme.palette.text.secondary}
-              width={60}
-              tickFormatter={(value) => value.toFixed(0)}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: theme.palette.background.paper,
-                borderRadius: 4,
-                borderColor: theme.palette.divider,
+                borderRadius: 8,
+                border: `1px solid ${theme.palette.divider}`,
                 boxShadow: theme.shadows[3],
               }}
             />
-            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+            <Legend 
+              wrapperStyle={{ paddingTop: '10px' }}
+              iconType="circle"
+            />
             {lines?.map((line, i) => (
               <Line
                 key={i}
                 type="monotone"
-                dataKey={line.key}
+                dataKey={line.dataKey}
                 name={line.name}
-                stroke={line.color || theme.palette.primary.main}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                stroke={line.stroke || line.color || theme.palette.primary.main}
+                strokeWidth={3}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
               />
             ))}
           </LineChart>
@@ -414,29 +421,29 @@ export const PieChartCard = ({ title, data, nameKey, valueKey, colors }) => {
   ];
 
   return (
-    <Box sx={{ mb: theme.spacing(4) }}>
+    <Box sx={{ width: '100%' }}>
       {title && (
         <Typography
-          variant="subtitle1"
-          fontWeight="bold"
+          variant="h6"
+          fontWeight={theme.typography.h6.fontWeight}
           gutterBottom
-          sx={{ mb: theme.spacing(3) }}
+          sx={{ mb: 2 }}
         >
           {title}
         </Typography>
       )}
       {data?.length ? (
-        <ResponsiveContainer width="100%" height={380}>
-          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+        <ResponsiveContainer width="100%" height={350}>
+          <PieChart>
             <Pie
               data={data}
               cx="50%"
-              cy="50%"
-              labelLine={{ stroke: theme.palette.text.secondary, strokeWidth: 1 }}
-              label={({ name, value, percent }) => 
-                `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+              cy="45%"
+              labelLine={false}
+              label={({ name, percent }) => 
+                `${name} (${(percent * 100).toFixed(0)}%)`
               }
-              outerRadius={100}
+              outerRadius={80}
               fill={theme.palette.primary.main}
               dataKey={valueKey || "value"}
               nameKey={nameKey || "name"}
@@ -444,22 +451,22 @@ export const PieChartCard = ({ title, data, nameKey, valueKey, colors }) => {
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={colors?.[index] || defaultColors[index % defaultColors.length]}
+                  fill={entry.color || colors?.[index] || defaultColors[index % defaultColors.length]}
                 />
               ))}
             </Pie>
             <Tooltip
               contentStyle={{
                 backgroundColor: theme.palette.background.paper,
-                borderRadius: 4,
-                borderColor: theme.palette.divider,
+                borderRadius: 8,
+                border: `1px solid ${theme.palette.divider}`,
                 boxShadow: theme.shadows[3],
               }}
             />
             <Legend 
               verticalAlign="bottom" 
               height={36}
-              wrapperStyle={{ paddingTop: '20px' }}
+              iconType="circle"
             />
           </PieChart>
         </ResponsiveContainer>
@@ -473,40 +480,63 @@ export const PieChartCard = ({ title, data, nameKey, valueKey, colors }) => {
 // ===========================
 // 📋 10. DATA TABLE
 // ===========================
-export const DataTable = ({ columns, data, emptyMessage }) => {
+export const DataTable = ({ columns, rows, data, title, emptyMessage, getRowId }) => {
   const theme = useTheme();
   
+  // Support both 'rows' and 'data' prop names for backwards compatibility
+  const tableData = rows || data || [];
+  
   return (
-    <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
-      {data?.length ? (
-        <Table>
-          <TableHead>
-            <TableRow>
-              {columns?.map((col, i) => (
-                <TableCell key={i} sx={{ fontWeight: theme.typography.fontWeightBold }}>
-                  {col.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((row, rowIndex) => (
-              <TableRow key={rowIndex} hover>
-                {columns.map((col, colIndex) => (
-                  <TableCell key={colIndex}>
-                    {col.render ? col.render(row[col.field], row, rowIndex) : row[col.field]}
+    <Box>
+      {title && (
+        <Typography variant="h6" fontWeight={theme.typography.h6.fontWeight} sx={{ mb: 2 }}>
+          {title}
+        </Typography>
+      )}
+      <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
+        {tableData?.length ? (
+          <Table>
+            <TableHead>
+              <TableRow>
+                {columns?.map((col, i) => (
+                  <TableCell 
+                    key={i} 
+                    sx={{ 
+                      fontWeight: theme.typography.fontWeightBold,
+                      flex: col.flex,
+                    }}
+                  >
+                    {col.headerName || col.label}
                   </TableCell>
                 ))}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <Box p={3}>
-          <Alert severity="info">{emptyMessage || "No data available"}</Alert>
-        </Box>
-      )}
-    </TableContainer>
+            </TableHead>
+            <TableBody>
+              {tableData.map((row, rowIndex) => {
+                const rowId = getRowId ? getRowId(row) : row.id || rowIndex;
+                return (
+                  <TableRow key={rowId} hover>
+                    {columns.map((col, colIndex) => (
+                      <TableCell key={colIndex}>
+                        {col.renderCell 
+                          ? col.renderCell({ row, value: row[col.field] })
+                          : col.render 
+                          ? col.render(row[col.field], row, rowIndex) 
+                          : row[col.field]}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <Box p={3}>
+            <Alert severity="info">{emptyMessage || "No data available"}</Alert>
+          </Box>
+        )}
+      </TableContainer>
+    </Box>
   );
 };
 
@@ -519,7 +549,7 @@ export const SummaryStatsGrid = ({ stats }) => {
   return (
     <Grid container spacing={2} sx={{ mb: theme.spacing(3) }}>
       {stats?.map((stat, index) => (
-        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+        <Grid item xs={12} sm={6} md={3} key={index}>
           <StatCard {...stat} />
         </Grid>
       ))}
@@ -530,8 +560,13 @@ export const SummaryStatsGrid = ({ stats }) => {
 // ===========================
 // 📑 12. TABBED CONTENT
 // ===========================
-export const TabbedContent = ({ tabs, currentTab, setCurrentTab }) => {
+export const TabbedContent = ({ tabs, currentTab: propCurrentTab, setCurrentTab: propSetCurrentTab }) => {
   const theme = useTheme();
+  const [internalTab, setInternalTab] = useState(0);
+  
+  // Use prop values if provided, otherwise use internal state
+  const currentTab = propCurrentTab !== undefined ? propCurrentTab : internalTab;
+  const setCurrentTab = propSetCurrentTab || setInternalTab;
   
   return (
     <Box>
@@ -575,7 +610,7 @@ export const MetricsSummaryCard = ({ title, metrics, icon: Icon }) => {
       </Box>
       <Grid container spacing={2}>
         {metrics?.map((metric, index) => (
-          <Grid size={{ xs: 6, md: 3 }} key={index}>
+          <Grid item xs={6} md={3} key={index}>
             <MetricBox {...metric} />
           </Grid>
         ))}

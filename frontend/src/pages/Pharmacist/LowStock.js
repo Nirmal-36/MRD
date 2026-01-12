@@ -107,7 +107,7 @@ const LowStock = () => {
 
       {/* Statistics */}
       <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(3) }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -127,7 +127,7 @@ const LowStock = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">

@@ -140,6 +140,16 @@ class Treatment(models.Model):
         
         # If updating existing treatment, stock management is handled separately
         # to avoid duplicate deductions
+    
+    def delete(self, *args, **kwargs):
+        """Override delete to ensure TreatmentMedicine delete() is called for stock restoration"""
+        # Manually delete each TreatmentMedicine to trigger their custom delete() method
+        # (CASCADE doesn't call custom delete methods)
+        for prescribed_medicine in self.prescribed_medicines.all():
+            prescribed_medicine.delete()
+        
+        # Now delete the treatment itself
+        super().delete(*args, **kwargs)
         
     class Meta:
         db_table = 'treatments'
@@ -200,6 +210,53 @@ class TreatmentMedicine(models.Model):
             self.stock_deducted = True
         
         super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        """
+        Restore medicine stock if treatment is deleted within 5 minutes.
+        After 5 minutes, medicines are considered dispensed and stock is not restored.
+        """
+        if self.stock_deducted:
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Calculate time since prescription was created
+            time_elapsed = timezone.now() - self.created_at
+            five_minutes = timedelta(minutes=5)
+            
+            # Only restore stock if deleted within 5 minutes
+            if time_elapsed <= five_minutes:
+                # Restore stock
+                self.medicine.current_stock += self.quantity
+                self.medicine.save(skip_stock_validation=True)
+                
+                # Create reversal transaction
+                from medicines.models import MedicineTransaction
+                
+                MedicineTransaction.objects.create(
+                    medicine=self.medicine,
+                    transaction_type='adjustment',
+                    quantity=self.quantity,
+                    date=timezone.now(),
+                    patient=self.treatment.patient.name if self.treatment else 'Unknown',
+                    performed_by=self.treatment.doctor if self.treatment else None,
+                    remarks=f"Stock restored: Treatment deleted within 5 minutes (Time elapsed: {int(time_elapsed.total_seconds())} seconds)"
+                )
+            else:
+                # Log that stock was NOT restored
+                from medicines.models import MedicineTransaction
+                
+                MedicineTransaction.objects.create(
+                    medicine=self.medicine,
+                    transaction_type='issued',
+                    quantity=0,  # No quantity change, just logging
+                    date=timezone.now(),
+                    patient=self.treatment.patient.name if self.treatment else 'Unknown',
+                    performed_by=self.treatment.doctor if self.treatment else None,
+                    remarks=f"Treatment deleted after 5 min grace period - Stock NOT restored ({self.quantity} {self.medicine.unit} already dispensed)"
+                )
+        
+        super().delete(*args, **kwargs)
     
     class Meta:
         db_table = 'treatment_medicines'

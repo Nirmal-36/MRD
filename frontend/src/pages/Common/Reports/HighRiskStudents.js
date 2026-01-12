@@ -1,128 +1,169 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Box, Grid, Paper, useTheme, Chip } from '@mui/material';
+import { Warning, Person, LocalHospital } from '@mui/icons-material';
+import apiService from '../../../services/api';
 import {
-  Box,
-  Paper,
-  useTheme,
-  Typography,
-  Chip,
-  Grid,
-} from "@mui/material";
-import { Warning, LocalHospital } from "@mui/icons-material";
-import apiService from "../../../services/api";
-import { PatientExportButton } from "../../../components/exports";
-import {
-  PageHeader,
-  LoadingState,
-  ErrorState,
-  StatCard,
-  DataTable,
+    PageHeader,
+    DateRangeFilter,
+    StatCard,
+    LoadingState,
+    ErrorState,
+    DataTable,
 } from "./DashboardElements";
 
 const HighRiskStudents = ({ department = null }) => {
-  const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [highRiskStudents, setHighRiskStudents] = useState(null);
+    const theme = useTheme();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [riskData, setRiskData] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line
-  }, [department]);
+    const [startDate, setStartDate] = useState(() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - 6);
+        return date.toISOString().split('T')[0];
+    });
+    const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const params = department ? { department } : {};
-      const res = await apiService.getHighRiskStudents(params);
-      setHighRiskStudents(res.data);
-      setError("");
-    } catch (err) {
-      console.error("Error fetching high-risk students:", err);
-      setError("Failed to load high-risk students report");
-    } finally {
-      setLoading(false);
-    }
-  };
+    useEffect(() => {
+        fetchHighRiskStudents();
+        // eslint-disable-next-line
+    }, [department]);
 
-  if (loading) return <LoadingState />;
-  if (error) return <ErrorState message={error} />;
+    const fetchHighRiskStudents = async () => {
+        try {
+            setLoading(true);
+            const params = { start_date: startDate, end_date: endDate };
+            if (department) params.department = department;
+            const response = await apiService.getHighRiskStudents(params);
+            setRiskData(response.data);
+            setError('');
+        } catch (err) {
+            console.error('Error fetching high-risk students:', err);
+            setError('Failed to load high-risk students data');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const summaryCards = [
-    {
-      label: 'Total High-Risk',
-      value: highRiskStudents?.total_count || 0,
-      icon: Warning,
-      gradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.light} 100%)`,
-    },
-    {
-      label: 'With Allergies',
-      value: highRiskStudents?.students_with_allergies || 0,
-      icon: LocalHospital,
-      gradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`,
-    },
-    {
-      label: 'With Chronic Conditions',
-      value: highRiskStudents?.students_with_chronic_conditions || 0,
-      icon: LocalHospital,
-      gradient: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.light} 100%)`,
-    },
-  ];
+    const handleRefresh = () => fetchHighRiskStudents();
 
-  const columns = [
-    { label: 'Student Name', field: 'name' },
-    { label: 'ID', field: 'employee_student_id' },
-    { label: 'Department', field: 'user__department' },
-    { label: 'Blood Group', field: 'blood_group' },
-    { label: 'Age', field: 'age' },
-    { 
-      label: 'Allergies', 
-      field: 'allergies',
-      render: (val) => val ? <Chip label={val} color="error" size="small" /> : '-'
-    },
-    { 
-      label: 'Chronic Conditions', 
-      field: 'chronic_conditions',
-      render: (val) => val ? <Chip label={val} color="warning" size="small" /> : '-'
-    },
-    { 
-      label: 'Contact', 
-      field: 'user__phone',
-      render: (val, row) => (
+    if (loading) return <LoadingState />;
+    if (error) return <ErrorState message={error} />;
+
+    const summaryCards = [
+        {
+            label: 'Total High-Risk Students',
+            value: riskData?.total_count || 0,
+            icon: Warning,
+            gradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.light} 100%)`,
+        },
+        {
+            label: 'Students with Allergies',
+            value: riskData?.students_with_allergies || 0,
+            icon: Person,
+            gradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`,
+        },
+        {
+            label: 'Chronic Conditions',
+            value: riskData?.students_with_chronic_conditions || 0,
+            icon: LocalHospital,
+            gradient: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.light} 100%)`,
+        },
+    ];
+
+    const columns = [
+        { 
+            field: 'name', 
+            headerName: 'Student Name', 
+            flex: 1.2,
+        },
+        { 
+            field: 'employee_student_id', 
+            headerName: 'ID', 
+            flex: 0.8,
+        },
+        { 
+            field: 'user__department', 
+            headerName: 'Department', 
+            flex: 0.6,
+        },
+        {
+            field: 'allergies',
+            headerName: 'Allergies',
+            flex: 1.2,
+            renderCell: (params) => (
+                params.row.allergies ? (
+                    <Chip 
+                        label={params.row.allergies} 
+                        size="small" 
+                        color="warning" 
+                        variant="outlined"
+                    />
+                ) : '-'
+            ),
+        },
+        {
+            field: 'chronic_conditions',
+            headerName: 'Chronic Conditions',
+            flex: 1.2,
+            renderCell: (params) => (
+                params.row.chronic_conditions ? (
+                    <Chip 
+                        label={params.row.chronic_conditions} 
+                        size="small" 
+                        color="error" 
+                        variant="outlined"
+                    />
+                ) : '-'
+            ),
+        },
+        { 
+            field: 'blood_group', 
+            headerName: 'Blood Group', 
+            flex: 0.6,
+        },
+        { 
+            field: 'user__phone', 
+            headerName: 'Phone', 
+            flex: 1,
+        },
+    ];
+
+    return (
         <Box>
-          <div>{val || '-'}</div>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>{row.user__email || '-'}</Typography>
+            <PageHeader
+                title="High-Risk Students"
+                subtitle="Students with allergies or chronic health conditions"
+                icon={Warning}
+                department={department}
+            />
+
+            <DateRangeFilter
+                startDate={startDate}
+                setStartDate={setStartDate}
+                endDate={endDate}
+                setEndDate={setEndDate}
+                onRefresh={handleRefresh}
+                loading={loading}
+            />
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {summaryCards.map((c, i) => (
+                    <Grid item xs={12} md={4} key={i}>
+                        <StatCard {...c} />
+                    </Grid>
+                ))}
+            </Grid>
+
+            <Paper sx={{ p: theme.spacing(3), borderRadius: 4 }}>
+                <DataTable
+                    rows={riskData?.high_risk_students || []}
+                    columns={columns}
+                    title="High-Risk Student Details"
+                />
+            </Paper>
         </Box>
-      )
-    },
-  ];
-
-  return (
-    <Box>
-      <PageHeader
-        title="High-Risk Students"
-        subtitle="Students requiring special attention due to health conditions"
-        icon={Warning}
-        department={department}
-        exportButton={<PatientExportButton sx={{ color: 'white', '& .MuiButton-root': { color: 'white' } }} />}
-      />
-
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {summaryCards.map((c, i) => (
-          <Grid size={{ xs: 12, md: 4 }} key={i}>
-            <StatCard {...c} />
-          </Grid>
-        ))}
-      </Grid>
-
-      <Paper sx={{ p: theme.spacing(3), borderRadius: 4 }}>
-        <DataTable
-          columns={columns}
-          data={highRiskStudents?.high_risk_students || []}
-          emptyMessage="No high-risk students found"
-        />
-      </Paper>
-    </Box>
-  );
+    );
 };
 
 export default HighRiskStudents;

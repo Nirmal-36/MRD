@@ -105,3 +105,113 @@ class User(AbstractUser):
             models.Index(fields=['username'], name='users_username_idx'),
             models.Index(fields=['is_available', 'user_type'], name='users_available_type_idx'),
         ]
+
+
+class ProfileChangeRequest(models.Model):
+    """
+    Model to handle user requests for changing their full name or username
+    Requires admin approval
+    """
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile_change_requests',
+        help_text="User requesting the change"
+    )
+    
+    # Current values
+    current_first_name = models.CharField(max_length=150)
+    current_last_name = models.CharField(max_length=150)
+    current_username = models.CharField(max_length=150)
+    
+    # Requested new values
+    requested_first_name = models.CharField(max_length=150, blank=True)
+    requested_last_name = models.CharField(max_length=150, blank=True)
+    requested_username = models.CharField(max_length=150, blank=True)
+    
+    # Request details
+    reason = models.TextField(help_text="Reason for requesting the change")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    
+    # Admin action
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_change_requests',
+        limit_choices_to={'user_type': 'admin'},
+        help_text="Admin who reviewed this request"
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    admin_notes = models.TextField(blank=True, help_text="Admin's notes or reason for rejection")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def clean(self):
+        """Validate that at least one field is being requested to change"""
+        super().clean()
+        
+        # Check if at least one field is different from current
+        first_name_changed = self.requested_first_name and self.requested_first_name != self.current_first_name
+        last_name_changed = self.requested_last_name and self.requested_last_name != self.current_last_name
+        username_changed = self.requested_username and self.requested_username != self.current_username
+        
+        if not (first_name_changed or last_name_changed or username_changed):
+            raise ValidationError('At least one field (first name, last name, or username) must be different from the current value.')
+        
+        # Validate username uniqueness if changing
+        if username_changed:
+            if User.objects.filter(username=self.requested_username).exclude(id=self.user.id).exists():
+                raise ValidationError({'requested_username': 'This username is already taken.'})
+    
+    def approve(self, admin_user, notes=''):
+        """Approve the change request and update user profile"""
+        from django.utils import timezone
+        
+        self.status = 'approved'
+        self.reviewed_by = admin_user
+        self.reviewed_at = timezone.now()
+        self.admin_notes = notes
+        
+        # Update user profile
+        if self.requested_first_name and self.requested_first_name != self.current_first_name:
+            self.user.first_name = self.requested_first_name
+        if self.requested_last_name and self.requested_last_name != self.current_last_name:
+            self.user.last_name = self.requested_last_name
+        if self.requested_username and self.requested_username != self.current_username:
+            self.user.username = self.requested_username
+        
+        self.user.save()
+        self.save()
+    
+    def reject(self, admin_user, notes=''):
+        """Reject the change request"""
+        from django.utils import timezone
+        
+        self.status = 'rejected'
+        self.reviewed_by = admin_user
+        self.reviewed_at = timezone.now()
+        self.admin_notes = notes
+        self.save()
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_status_display()} ({self.created_at.strftime('%Y-%m-%d')})"
+    
+    class Meta:
+        db_table = 'profile_change_requests'
+        ordering = ['-created_at']
+        verbose_name = 'Profile Change Request'
+        verbose_name_plural = 'Profile Change Requests'
+        indexes = [
+            models.Index(fields=['user', 'status'], name='pcr_user_status_idx'),
+            models.Index(fields=['status', 'created_at'], name='pcr_status_created_idx'),
+        ]

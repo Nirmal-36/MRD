@@ -14,6 +14,7 @@ import {
   Hotel as BedIcon,
   LocalPharmacy as MedicineIcon,
   Person as PersonIcon,
+  CleaningServices as CleaningIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/api';
@@ -53,6 +54,7 @@ const DoctorLayout = () => {
     { text: 'Treatments', icon: <TreatmentIcon />, path: '/doctor/treatments' },
     { text: 'Beds', icon: <BedIcon />, path: '/doctor/beds' },
     { text: 'Medicines', icon: <MedicineIcon />, path: '/doctor/medicines' },
+    { text: 'Cleaning Records', icon: <CleaningIcon />, path: '/doctor/cleaning-records' },
     { text: 'My Profile', icon: <PersonIcon />, path: '/doctor/profile' },
   ];
 

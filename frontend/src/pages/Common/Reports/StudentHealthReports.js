@@ -11,13 +11,12 @@ import {
     BarChartCard,
 } from "./DashboardElements";
 
-const StudentHealthReports = ({ department = null, userRole = 'principal' }) => {
+const StudentHealthReports = ({ department = null }) => {
     const theme = useTheme();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [studentHealth, setStudentHealth] = useState(null);
 
-    // Date range state - default to last 6 months
     const [startDate, setStartDate] = useState(() => {
         const date = new Date();
         date.setMonth(date.getMonth() - 6);

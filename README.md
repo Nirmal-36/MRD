@@ -1,6 +1,32 @@
-# Medical Room Digitalization (MRD) System
+<div align="center">
+  <img src="frontend/public/klh-medcare-logo.svg" alt="KLH MedCare Logo" width="300"/>
+  
+  # KLH MedCare
+  ### Healthcare Management Platform for KL University Hospital
+  
+  [![Django](https://img.shields.io/badge/Django-5.2.7-green.svg)](https://www.djangoproject.com/)
+  [![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://reactjs.org/)
+  [![Material-UI](https://img.shields.io/badge/Material--UI-7.3.4-007FFF.svg)](https://mui.com/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+  
+  *Streamline medical operations with advanced patient care, inventory management, and intelligent analytics*
+  
+</div>
 
-A comprehensive web application designed to digitalize medical room operations for KL University's medical center. Built with Django REST Framework and React, featuring role-based access control, real-time inventory management, and automated reporting.
+---
+
+## 🏥 About KLH MedCare
+
+KLH MedCare is a comprehensive healthcare management platform designed specifically for KL University Hospital. Built with modern technologies and best practices, it digitizes medical room operations, enhances patient care, and provides real-time insights for better decision-making.
+
+**Key Highlights:**
+- 🔐 Advanced role-based access control (8 user types)
+- 📊 Real-time analytics and reporting
+- 💊 Smart inventory management with auto-alerts
+- 🛏️ Intelligent bed allocation system
+- 📱 Mobile-responsive design
+- 📤 Comprehensive Excel export functionality
+- 🔄 Offline support with data sync
 
 ## 🚀 Features
 
@@ -32,8 +58,14 @@ A comprehensive web application designed to digitalize medical room operations f
 
 ## 📁 Project Structure
 ```
-MRD/
-├── backend/                    # Django backend
+klh-medcare/
+├── backend/                    # Django REST API
+│   ├── api/                   # Export functionality (17 endpoints)
+│   │   ├── export_utils.py   # Common Excel utilities
+│   │   ├── export_patients.py # Patient data exports
+│   │   ├── export_medicines.py # Medicine exports
+│   │   ├── export_beds.py    # Bed management exports
+│   │   └── export_others.py  # Cleaning & directory exports
 │   ├── users/                 # User management & authentication
 │   │   ├── tests/            # Unit & integration tests
 │   │   ├── models.py         # User model with 9 indexes
@@ -51,26 +83,37 @@ MRD/
 │   ├── requirements.txt       # Python dependencies
 │   └── manage.py
 ├── frontend/                   # React frontend
+│   ├── public/
+│   │   ├── klh-medcare-logo.svg    # Primary logo
+│   │   └── klh-medcare-icon.svg    # App icon
 │   ├── src/
+│   │   ├── components/       # Reusable components
+│   │   │   ├── common/       # Toast, Sidebar, Logo, etc.
+│   │   │   ├── layouts/      # Role-based layouts
+│   │   │   └── exports/      # Export button components
+│   │   │       ├── PatientExportButton.js
+│   │   │       ├── MedicineExportButton.js
+│   │   │       ├── BedExportButton.js
+│   │   │       ├── OtherExportButton.js
+│   │   │       └── MasterExportButton.js
 │   │   ├── hooks/            # Custom React hooks
 │   │   │   ├── useFormValidation.js
 │   │   │   ├── useOnlineStatus.js
 │   │   │   └── useSessionTimeout.js
-│   │   ├── components/       # Reusable components
-│   │   │   ├── common/       # Toast, OfflineBanner, etc.
-│   │   │   └── layouts/      # Role-based layouts
 │   │   ├── pages/            # Route pages
 │   │   │   ├── Auth/         # Login, Register, ForgotPassword
 │   │   │   ├── Doctor/       # Doctor dashboard & features
 │   │   │   ├── Patient/      # Patient dashboard
-│   │   │   └── Pharmacist/   # Pharmacy management
-│   │   ├── contexts/         # AuthContext, ThemeContext
-│   │   └── services/         # API service layer
+│   │   │   ├── Pharmacist/   # Pharmacy management
+│   │   │   ├── Principal/    # Principal dashboard
+│   │   │   └── Common/       # Shared pages (Profile, Reports)
+│   │   ├── contexts/         # AuthContext
+│   │   ├── services/         # API service layer
+│   │   └── utils/            # Export utilities
 │   ├── package.json
-│   └── public/
-├── .env.example               # Environment variables template
-├── HANDOVER_GUIDE.md          # Production deployment guide
-└── README.md
+│   └── .gitignore
+├── .gitignore                 # Git ignore rules
+└── README.md                  # This file
 ```
 
 ## 🚀 Quick Start
@@ -96,7 +139,7 @@ DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
 # Database (MySQL)
-DB_NAME=mrd_db
+DB_NAME=klh_medcare_db
 DB_USER=root
 DB_PASSWORD=your-password
 DB_HOST=localhost

@@ -1,25 +1,15 @@
 {
-  "short_name": "MRD System",
-  "name": "Medical Records and Data Management System",
+  "short_name": "KLH MedCare",
+  "name": "KLH MedCare - Healthcare Management Platform",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
+      "src": "klh-university-logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#6A96BC",
-  "background_color": "#E6DCCF"
+  "theme_color": "#213448",
+  "background_color": "#F5F5F5"
 }

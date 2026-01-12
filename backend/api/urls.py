@@ -4,7 +4,7 @@ from patients.views import PatientViewSet, TreatmentViewSet
 from medicines.views import MedicineViewSet, MedicineTransactionViewSet, StockRequestViewSet
 from beds.views import BedViewSet, BedAllocationViewSet
 from cleaning.views import CleaningRecordViewSet, CleaningStaffViewSet
-from users.views import UserViewSet
+from users.views import UserViewSet, ProfileChangeRequestViewSet
 from . import views
 from .dashboard_views import dashboard_overview, student_hospital_info, principal_dashboard, hod_dashboard
 from .common_reports import (
@@ -36,6 +36,7 @@ router.register(r'beds', BedViewSet)
 router.register(r'bed-allocations', BedAllocationViewSet)
 router.register(r'cleaning-records', CleaningRecordViewSet)
 router.register(r'cleaning-staff', CleaningStaffViewSet)
+router.register(r'profile-change-requests', ProfileChangeRequestViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -28,6 +28,7 @@ import Patients from "./pages/Doctor/Patients";
 import Treatments from "./pages/Doctor/Treatments";
 import Beds from "./pages/Doctor/Beds";
 import Medicines from "./pages/Doctor/Medicines";
+import CleaningRecords from "./pages/Doctor/CleaningRecords";
 
 import PharmacistDashboard from "./pages/Pharmacist/PharmacistDashboard";
 import StockRequests from "./pages/Pharmacist/StockRequests";
@@ -146,6 +147,7 @@ function AppContent({ mode, setMode }) {
               <Route path="treatments" element={<Treatments />} />
               <Route path="beds" element={<Beds />} />
               <Route path="medicines" element={<Medicines />} />
+              <Route path="cleaning-records" element={<CleaningRecords />} />
               <Route path="profile" element={<Profile />} />
             </Route>
 

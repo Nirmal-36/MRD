@@ -28,7 +28,7 @@ from api.health_views import health_check, readiness_check, version_info
 def api_root(request):
     """API Root - Shows available endpoints"""
     return JsonResponse({
-        'message': 'Medical Room Digitalization (MRD) System API',
+        'message': 'KLH MedCare - Healthcare Management Platform API',
         'version': '1.0',
         'endpoints': {
             'admin': '/admin/',

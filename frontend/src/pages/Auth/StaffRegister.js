@@ -16,7 +16,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import PasswordStrengthIndicator from '../../components/common/PasswordStrengthIndicator';
-import { MedicalServices as MedicalIcon } from '@mui/icons-material';
 
 const StaffRegister = () => {
   const navigate = useNavigate();
@@ -138,8 +137,19 @@ const StaffRegister = () => {
       >
         <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <MedicalIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h4" component="h1" gutterBottom>
+            <Box
+              component="img"
+              src="/klh-university-logo.png"
+              alt="KLH MedCare"
+              sx={{
+                height: { xs: 90, sm: 100 },
+                width: 'auto',
+                mb: 2,
+                mx: 'auto',
+                display: 'block',
+              }}
+            />
+            <Typography variant="h5" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
               Staff Registration
             </Typography>
             <Typography variant="subtitle1" color="text.secondary">

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django import forms
-from .models import User
+from .models import User, ProfileChangeRequest
 
 
 class UserAdminForm(forms.ModelForm):
@@ -71,3 +71,29 @@ class UserAdmin(BaseUserAdmin):
         return obj.get_display_id() or '-'
     get_display_id.short_description = 'ID'
     get_display_id.admin_order_field = 'employee_id'
+
+
+@admin.register(ProfileChangeRequest)
+class ProfileChangeRequestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'requested_first_name', 'requested_last_name', 'requested_username', 'status', 'created_at', 'reviewed_by', 'reviewed_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('user__username', 'user__email', 'reason')
+    readonly_fields = ('user', 'current_first_name', 'current_last_name', 'current_username', 'created_at', 'updated_at', 'reviewed_at', 'reviewed_by')
+    
+    def save_model(self, request, obj, form, change):
+        """Automatically call approve/reject methods when status changes"""
+        if change:  # Only for existing objects
+            old_status = ProfileChangeRequest.objects.get(pk=obj.pk).status
+            new_status = obj.status
+            
+            # If status changed to approved, call approve method
+            if old_status == 'pending' and new_status == 'approved':
+                obj.approve(request.user, obj.admin_notes or '')
+                return  # approve() already saves
+            
+            # If status changed to rejected, call reject method
+            elif old_status == 'pending' and new_status == 'rejected':
+                obj.reject(request.user, obj.admin_notes or 'Rejected by admin')
+                return  # reject() already saves
+        
+        super().save_model(request, obj, form, change)

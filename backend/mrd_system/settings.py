@@ -205,8 +205,8 @@ REST_FRAMEWORK = {
 
 # API Documentation Settings (drf-spectacular)
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'MRD System API',
-    'DESCRIPTION': 'Medical Records Database System - Complete API Documentation for KL University Medical Center',
+    'TITLE': 'KLH MedCare API',
+    'DESCRIPTION': 'Healthcare Management Platform - Complete API Documentation for KL University Hospital',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
@@ -255,7 +255,7 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='MRD System <noreply@mrd.com>')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='KLH MedCare <noreply@klhmedcare.com>')
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'

@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { useFormValidation } from '../../hooks/useFormValidation';
-import { LocalHospital as HospitalIcon } from '@mui/icons-material';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -124,12 +123,20 @@ const Login = () => {
           }}
         >
           <Box sx={{ textAlign: 'center', mb: { xs: 3, sm: 4 } }}>
-            <HospitalIcon sx={{ fontSize: { xs: 50, sm: 60 }, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              MRD System
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-              Medical Records Database
+            <Box
+              component="img"
+              src="/klh-university-logo.png"
+              alt="KLH MedCare"
+              sx={{
+                height: { xs: 100, sm: 120 },
+                width: 'auto',
+                mb: 2,
+                mx: 'auto',
+                display: 'block',
+              }}
+            />
+            <Typography variant="h1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+              Healthcare Management Platform
             </Typography>
           </Box>
 

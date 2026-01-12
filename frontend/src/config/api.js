@@ -42,13 +42,23 @@ export const API_ENDPOINTS = {
   STOCK_REQUEST_DETAIL: (id) => `${API_BASE_URL}/stock-requests/${id}/`,
   
   // Cleaning
-  CLEANING: `${API_BASE_URL}/cleaning/`,
-  CLEANING_DETAIL: (id) => `${API_BASE_URL}/cleaning/${id}/`,
+  CLEANING_RECORDS: `${API_BASE_URL}/cleaning-records/`,
+  CLEANING_RECORD_DETAIL: (id) => `${API_BASE_URL}/cleaning-records/${id}/`,
+  CLEANING_STAFF: `${API_BASE_URL}/cleaning-staff/`,
+  CLEANING_STAFF_DETAIL: (id) => `${API_BASE_URL}/cleaning-staff/${id}/`,
   
   // Users
   USERS: `${API_BASE_URL}/users/`,
   USER_DETAIL: (id) => `${API_BASE_URL}/users/${id}/`,
   APPROVE_STAFF: `${API_BASE_URL}/users/approve_staff/`,
+  
+  // Profile Change Requests
+  PROFILE_CHANGE_REQUESTS: `${API_BASE_URL}/profile-change-requests/`,
+  PROFILE_CHANGE_REQUEST_DETAIL: (id) => `${API_BASE_URL}/profile-change-requests/${id}/`,
+  PROFILE_CHANGE_REQUEST_APPROVE: (id) => `${API_BASE_URL}/profile-change-requests/${id}/approve/`,
+  PROFILE_CHANGE_REQUEST_REJECT: (id) => `${API_BASE_URL}/profile-change-requests/${id}/reject/`,
+  PROFILE_CHANGE_REQUESTS_PENDING: `${API_BASE_URL}/profile-change-requests/pending/`,
+  MY_PROFILE_CHANGE_REQUESTS: `${API_BASE_URL}/profile-change-requests/my_requests/`,
 };
 
 export default API_BASE_URL;

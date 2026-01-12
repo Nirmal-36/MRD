@@ -125,7 +125,7 @@ const PrincipalDashboard = () => {
             label="Monthly Visits"
             value={quickStats.totalVisits}
             icon={LocalHospital}
-            gradient={`linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.primary.main} 100%)`}
+            gradient={`linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -133,7 +133,7 @@ const PrincipalDashboard = () => {
             label="Critical Stock Items"
             value={quickStats.criticalStock}
             icon={Warning}
-            gradient={`linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.light} 100%)`}
+            gradient={`linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>

@@ -3,7 +3,8 @@ import {
   Box, Card, CardContent, Typography, Alert, CircularProgress,
   TextField, Button, Divider, Dialog, DialogTitle, DialogContent,
   DialogActions, IconButton, InputAdornment,
-  Chip, useTheme
+  Chip, useTheme, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -11,7 +12,9 @@ import {
   Cancel as CancelIcon,
   Lock as LockIcon,
   Visibility,
-  VisibilityOff
+  VisibilityOff,
+  PersonAdd as PersonAddIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import apiService from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,9 +41,23 @@ const Profile = () => {
     new_password: '',
     confirm_password: ''
   });
+  
+  // Profile change request state
+  const [changeRequestDialogOpen, setChangeRequestDialogOpen] = useState(false);
+  const [changeRequestForm, setChangeRequestForm] = useState({
+    requested_first_name: '',
+    requested_last_name: '',
+    requested_username: '',
+    reason: ''
+  });
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [requestToCancel, setRequestToCancel] = useState(null);
 
   useEffect(() => {
     fetchProfile();
+    fetchMyRequests();
   }, []);
 
   const fetchProfile = async () => {
@@ -151,6 +168,115 @@ const Profile = () => {
   const togglePasswordVisibility = (field) => {
     setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
   };
+  
+  // Profile change request functions
+  const fetchMyRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await apiService.getMyProfileChangeRequests();
+      setMyRequests(response.data || []);
+    } catch (err) {
+      console.error('Error fetching change requests:', err);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+  
+  const handleOpenChangeRequestDialog = () => {
+    // Initialize form with current values
+    setChangeRequestForm({
+      requested_first_name: profileData?.first_name || '',
+      requested_last_name: profileData?.last_name || '',
+      requested_username: profileData?.username || '',
+      reason: ''
+    });
+    setChangeRequestDialogOpen(true);
+  };
+  
+  const handleCloseChangeRequestDialog = () => {
+    setChangeRequestDialogOpen(false);
+    setChangeRequestForm({
+      requested_first_name: '',
+      requested_last_name: '',
+      requested_username: '',
+      reason: ''
+    });
+    setError('');
+  };
+  
+  const handleSubmitChangeRequest = async () => {
+    try {
+      // Validate that at least one field changed
+      const firstNameChanged = changeRequestForm.requested_first_name !== profileData?.first_name;
+      const lastNameChanged = changeRequestForm.requested_last_name !== profileData?.last_name;
+      const usernameChanged = changeRequestForm.requested_username !== profileData?.username;
+      
+      if (!firstNameChanged && !lastNameChanged && !usernameChanged) {
+        setError('Please change at least one field (first name, last name, or username)');
+        return;
+      }
+      
+      if (!changeRequestForm.reason.trim()) {
+        setError('Please provide a reason for this change request');
+        return;
+      }
+      
+      await apiService.createProfileChangeRequest({
+        requested_first_name: changeRequestForm.requested_first_name || profileData?.first_name,
+        requested_last_name: changeRequestForm.requested_last_name || profileData?.last_name,
+        requested_username: changeRequestForm.requested_username || profileData?.username,
+        reason: changeRequestForm.reason
+      });
+      
+      setSuccess('Profile change request submitted successfully! Wait for admin approval.');
+      setError('');
+      handleCloseChangeRequestDialog();
+      fetchMyRequests(); // Refresh requests list
+      
+      // Auto-hide success message
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Error submitting change request:', err);
+      const errorMsg = err.response?.data?.error || 
+                      err.response?.data?.requested_username?.[0] ||
+                      err.response?.data?.reason?.[0] ||
+                      err.response?.data?.non_field_errors?.[0] ||
+                      'Failed to submit change request';
+      setError(errorMsg);
+    }
+  };
+  
+  const handleOpenCancelDialog = (request) => {
+    setRequestToCancel(request);
+    setCancelDialogOpen(true);
+  };
+  
+  const handleCloseCancelDialog = () => {
+    setCancelDialogOpen(false);
+    setRequestToCancel(null);
+  };
+  
+  const handleConfirmCancel = async () => {
+    try {
+      await apiService.deleteProfileChangeRequest(requestToCancel.id);
+      setSuccess('Request cancelled successfully');
+      handleCloseCancelDialog();
+      fetchMyRequests();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error cancelling request:', err);
+      setError(err.response?.data?.error || 'Failed to cancel request');
+    }
+  };
+  
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'warning';
+      case 'approved': return 'success';
+      case 'rejected': return 'error';
+      default: return 'default';
+    }
+  };
 
   const getUserTypeLabel = (userType) => {
     const labels = {
@@ -207,6 +333,14 @@ const Profile = () => {
           </Typography>
         </Box>
         <Box>
+          <Button
+            variant="outlined"
+            startIcon={<PersonAddIcon />}
+            onClick={handleOpenChangeRequestDialog}
+            sx={{ mr: theme.spacing(2) }}
+          >
+            Request Name/Username Change
+          </Button>
           <Button
             variant="outlined"
             startIcon={<LockIcon />}
@@ -355,6 +489,190 @@ const Profile = () => {
           </Box>
         </CardContent>
       </Card>
+
+      {/* My Change Requests */}
+      {myRequests.length > 0 && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom fontWeight={theme.typography.h6.fontWeight}>
+              My Profile Change Requests
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Requested Changes</TableCell>
+                    <TableCell>Reason</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Submitted</TableCell>
+                    <TableCell>Admin Response</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {myRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell>
+                        <Box>
+                          {request.requested_first_name !== request.current_first_name && (
+                            <Typography variant="body2">
+                              First Name: {request.current_first_name} → <strong>{request.requested_first_name}</strong>
+                            </Typography>
+                          )}
+                          {request.requested_last_name !== request.current_last_name && (
+                            <Typography variant="body2">
+                              Last Name: {request.current_last_name} → <strong>{request.requested_last_name}</strong>
+                            </Typography>
+                          )}
+                          {request.requested_username !== request.current_username && (
+                            <Typography variant="body2">
+                              Username: {request.current_username} → <strong>{request.requested_username}</strong>
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{request.reason}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={request.status_display} 
+                          color={getStatusColor(request.status)} 
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(request.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {request.admin_notes || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {request.status === 'pending' && (
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleOpenCancelDialog(request)}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cancel Request Confirmation Dialog */}
+      <Dialog open={cancelDialogOpen} onClose={handleCloseCancelDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>Cancel Profile Change Request</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to cancel this profile change request?
+          </Typography>
+          {requestToCancel && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="body2">
+                <strong>Requested Changes:</strong>
+              </Typography>
+              {requestToCancel.requested_first_name !== requestToCancel.current_first_name && (
+                <Typography variant="body2">
+                  First Name: {requestToCancel.current_first_name} → {requestToCancel.requested_first_name}
+                </Typography>
+              )}
+              {requestToCancel.requested_last_name !== requestToCancel.current_last_name && (
+                <Typography variant="body2">
+                  Last Name: {requestToCancel.current_last_name} → {requestToCancel.requested_last_name}
+                </Typography>
+              )}
+              {requestToCancel.requested_username !== requestToCancel.current_username && (
+                <Typography variant="body2">
+                  Username: {requestToCancel.current_username} → {requestToCancel.requested_username}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog}>No, Keep It</Button>
+          <Button onClick={handleConfirmCancel} variant="contained" color="error">
+            Yes, Cancel Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Profile Change Request Dialog */}
+      <Dialog 
+        open={changeRequestDialogOpen} 
+        onClose={handleCloseChangeRequestDialog} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          Request Profile Change
+          <IconButton
+            onClick={handleCloseChangeRequestDialog}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Alert severity="info">
+              Changes to your name and username require admin approval. Once approved, your profile will be updated automatically.
+            </Alert>
+            
+            <TextField
+              label="First Name"
+              value={changeRequestForm.requested_first_name}
+              onChange={(e) => setChangeRequestForm({ ...changeRequestForm, requested_first_name: e.target.value })}
+              fullWidth
+              helperText={`Current: ${profileData?.first_name || 'Not set'}`}
+            />
+            
+            <TextField
+              label="Last Name"
+              value={changeRequestForm.requested_last_name}
+              onChange={(e) => setChangeRequestForm({ ...changeRequestForm, requested_last_name: e.target.value })}
+              fullWidth
+              helperText={`Current: ${profileData?.last_name || 'Not set'}`}
+            />
+            
+            <TextField
+              label="Username"
+              value={changeRequestForm.requested_username}
+              onChange={(e) => setChangeRequestForm({ ...changeRequestForm, requested_username: e.target.value })}
+              fullWidth
+              helperText={`Current: ${profileData?.username}`}
+            />
+            
+            <TextField
+              label="Reason for Change"
+              value={changeRequestForm.reason}
+              onChange={(e) => setChangeRequestForm({ ...changeRequestForm, reason: e.target.value })}
+              fullWidth
+              multiline
+              rows={3}
+              required
+              helperText="Please explain why you need to change your profile information"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseChangeRequestDialog}>Cancel</Button>
+          <Button 
+            onClick={handleSubmitChangeRequest} 
+            variant="contained"
+            disabled={!changeRequestForm.reason.trim()}
+          >
+            Submit Request
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Change Password Dialog */}
       <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>

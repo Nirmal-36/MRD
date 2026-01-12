@@ -14,7 +14,6 @@ import {
   CircularProgress,
   Link
 } from '@mui/material';
-import LockResetIcon from '@mui/icons-material/LockReset';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/common/Toast';
 import { useFormValidation } from '../../hooks/useFormValidation';
@@ -329,9 +328,18 @@ function ForgotPassword() {
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: { xs: 3, sm: 4 } }}>
-            <LockResetIcon sx={{ fontSize: { xs: 50, sm: 60 }, color: 'primary.main', mb: 2 }} />
-            <Typography component="h1" variant="h4" sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-              Forgot Password
+            <Box
+              component="img"
+              src="/klh-university-logo.png"
+              alt="KLH MedCare"
+              sx={{
+                height: { xs: 90, sm: 100 },
+                width: 'auto',
+                mb: 2,
+              }}
+            />
+            <Typography component="h1" variant="h5" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' }, fontWeight: 600 }}>
+              Reset Password
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
               Follow the steps to reset your password

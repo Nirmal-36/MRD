@@ -1,24 +1,35 @@
 import { createTheme } from "@mui/material/styles";
 
-const baseBlue = "#6A96BC";
-const lightBlue = "#A9CAE3";
-const darkBlue = "#4A6FA5";
-const beige = "#D9CAB3";
+// ColorHunt Palette: https://colorhunt.co/palette/21344854779294b4c1eae0cf
+const darkNavy = "#4988C4";         // Dark blue/navy
+const mediumBlue = "#1C4D8D";       // Medium blue
+const lightBlue = "#4988C4";        // Light blue/gray-blue
+const creamBeige = "#EAE0CF";       // Light beige/cream
+
+// Derived colors for better UI
+const navyDark = "#1C4D8D";         // Darker navy
+const beigeLight = "#F5EDE0";       // Lighter beige
+const beigeDark = "#D4C7B3";        // Darker beige
+
+// Accent colors for semantic meaning
+const accentGreen = "#018b06";      // Success
+const accentOrange = "#ff3c00";     // Warning
+const accentRed = "#ff0000";        // Error
 
 const getDesignTokens = (mode) => ({
   palette: {
     mode,
     primary: {
-      main: baseBlue,
-      light: lightBlue,
-      dark: darkBlue,
+      main: darkNavy,
+      light: mediumBlue,
+      dark: navyDark,
       contrastText: "#fff",
     },
     secondary: {
-      main: beige,
-      light: "#E6DCCF",
-      dark: "#C4B5A0",
-      contrastText: "#2C3E50",
+      main: creamBeige,
+      light: beigeLight,
+      dark: beigeDark,
+      contrastText: darkNavy,
     },
     ...(mode === "light"
       ? {
@@ -27,9 +38,9 @@ const getDesignTokens = (mode) => ({
             paper: "#ffffff",
           },
           text: {
-            primary: "#2C3E50",
-            secondary: darkBlue,
-            disabled: "rgba(0,0,0,0.38)",
+            primary: "#000000",
+            secondary: "rgba(0, 0, 0, 0.7)",
+            disabled: "rgba(0, 0, 0, 0.38)",
           },
         }
       : {
@@ -38,15 +49,15 @@ const getDesignTokens = (mode) => ({
             paper: "#1E1E1E",
           },
           text: {
-            primary: "#E0E0E0",
-            secondary: "#A9CAE3",
-            disabled: "rgba(255,255,255,0.38)",
+            primary: "#FFFFFF",
+            secondary: "rgba(255, 255, 255, 0.7)",
+            disabled: "rgba(255, 255, 255, 0.38)",
           },
         }),
-    error: { main: "#d32f2f", light: "#ef5350", dark: "#c62828", contrastText: "#fff" },
-    warning: { main: "#ed6c02", light: "#ff9800", dark: "#e65100", contrastText: "#fff" },
-    info: { main: baseBlue, light: lightBlue, dark: darkBlue, contrastText: "#fff" },
-    success: { main: "#2e7d32", light: "#4caf50", dark: "#1b5e20", contrastText: "#fff" },
+    error: { main: accentRed, light: "#EF9A9A", dark: "#D32F2F", contrastText: "#fff" },
+    warning: { main: accentOrange, light: "#FFAB91", dark: "#E64A19", contrastText: "#fff" },
+    info: { main: mediumBlue, light: lightBlue, dark: darkNavy, contrastText: "#fff" },
+    success: { main: accentGreen, light: "#81C784", dark: "#388E3C", contrastText: "#fff" },
   },
 
   typography: {
@@ -132,7 +143,7 @@ const getDesignTokens = (mode) => ({
       styleOverrides: {
         body: {
           backgroundColor: mode === "light" ? "#F5F5F5" : "#121212",
-          color: mode === "light" ? "#2C3E50" : "#E0E0E0",
+          color: mode === "light" ? "#000000" : "#FFFFFF",
           fontFamily: "Roboto, 'Helvetica Neue', Arial, sans-serif",
           margin: 0,
           padding: 0,
@@ -140,8 +151,28 @@ const getDesignTokens = (mode) => ({
         },
         a: {
           textDecoration: "none",
-          color: mode === "light" ? darkBlue : lightBlue,
-          "&:hover": { textDecoration: "underline" },
+          color: mode === "light" ? darkNavy : lightBlue,
+          "&:hover": { 
+            textDecoration: "underline",
+            color: mode === "light" ? mediumBlue : creamBeige,
+          },
+        },
+      },
+    },
+
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: {
+          h1: 'h1',
+          h2: 'h2',
+          h3: 'h3',
+          h4: 'h4',
+          h5: 'h5',
+          h6: 'h6',
+          subtitle1: 'h6',
+          subtitle2: 'h6',
+          body1: 'p',
+          body2: 'p',
         },
       },
     },
@@ -186,7 +217,7 @@ const getDesignTokens = (mode) => ({
       styleOverrides: {
         root: {
           boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-          backgroundColor: mode === "light" ? baseBlue : "#1E1E1E",
+          backgroundColor: mode === "light" ? darkNavy : "#1E1E1E",
           color: "#fff",
         },
       },
@@ -205,7 +236,7 @@ const getDesignTokens = (mode) => ({
     MuiTableCell: {
       styleOverrides: {
         head: {
-          backgroundColor: baseBlue,
+          backgroundColor: darkNavy,
           color: "#fff",
           fontWeight: 700,
           fontSize: "0.813rem",
@@ -243,13 +274,13 @@ const getDesignTokens = (mode) => ({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          backgroundColor: mode === "light" ? "#2C3E50" : "#E0E0E0",
-          color: mode === "light" ? "#fff" : "#2C3E50",
+          backgroundColor: mode === "light" ? "#000000" : "#FFFFFF",
+          color: mode === "light" ? "#FFFFFF" : "#000000",
           fontSize: "0.875rem",
           borderRadius: 4,
         },
         arrow: {
-          color: mode === "light" ? "#2C3E50" : "#E0E0E0",
+          color: mode === "light" ? "#000000" : "#FFFFFF",
         },
       },
     },

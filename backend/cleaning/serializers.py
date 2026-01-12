@@ -75,6 +75,12 @@ class CleaningRecordSerializer(serializers.ModelSerializer):
         """Set the user who recorded this cleaning"""
         validated_data['recorded_by'] = self.context['request'].user
         return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Update cleaning record - don't change recorded_by"""
+        # Remove recorded_by from validated_data if present to prevent changes
+        validated_data.pop('recorded_by', None)
+        return super().update(instance, validated_data)
 
 
 class CleaningRecordCreateSerializer(serializers.ModelSerializer):
@@ -131,3 +137,29 @@ class CleaningRecordCreateSerializer(serializers.ModelSerializer):
             })
         
         return data
+    
+    def create(self, validated_data):
+        """Set the user who recorded this cleaning and auto-save new staff"""
+        validated_data['recorded_by'] = self.context['request'].user
+        
+        # Auto-save new cleaning staff for future use
+        cleaner_name = validated_data.get('cleaner_name')
+        cleaner_contact = validated_data.get('cleaner_contact', '')
+        
+        if cleaner_name:
+            # Check if staff exists, create if not
+            staff, created = CleaningStaff.objects.get_or_create(
+                name=cleaner_name,
+                defaults={
+                    'contact_number': cleaner_contact,
+                    'is_active': True,
+                    'notes': 'Auto-added from cleaning record'
+                }
+            )
+            
+            # Update contact if staff exists but contact is empty
+            if not created and cleaner_contact and not staff.contact_number:
+                staff.contact_number = cleaner_contact
+                staff.save(update_fields=['contact_number'])
+        
+        return super().create(validated_data)

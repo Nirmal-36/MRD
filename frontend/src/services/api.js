@@ -123,11 +123,19 @@ const apiService = {
   approveStockRequest: (id, data) => apiClient.post(`${API_ENDPOINTS.STOCK_REQUESTS}${id}/approve/`, data),
   rejectStockRequest: (id, data) => apiClient.post(`${API_ENDPOINTS.STOCK_REQUESTS}${id}/reject/`, data),
 
-  // Cleaning
-  getCleaningSchedules: (params) => apiClient.get(API_ENDPOINTS.CLEANING, { params }),
-  createCleaningSchedule: (data) => apiClient.post(API_ENDPOINTS.CLEANING, data),
-  updateCleaningSchedule: (id, data) => apiClient.put(API_ENDPOINTS.CLEANING_DETAIL(id), data),
-  deleteCleaningSchedule: (id) => apiClient.delete(API_ENDPOINTS.CLEANING_DETAIL(id)),
+  // Cleaning Records
+  getCleaningRecords: (params) => apiClient.get(API_ENDPOINTS.CLEANING_RECORDS, { params }),
+  getCleaningRecord: (id) => apiClient.get(API_ENDPOINTS.CLEANING_RECORD_DETAIL(id)),
+  createCleaningRecord: (data) => apiClient.post(API_ENDPOINTS.CLEANING_RECORDS, data),
+  updateCleaningRecord: (id, data) => apiClient.put(API_ENDPOINTS.CLEANING_RECORD_DETAIL(id), data),
+  deleteCleaningRecord: (id) => apiClient.delete(API_ENDPOINTS.CLEANING_RECORD_DETAIL(id)),
+  getCleaningStaffSuggestions: () => apiClient.get(`${API_ENDPOINTS.CLEANING_RECORDS}staff_suggestions/`),
+  
+  // Cleaning Staff
+  getCleaningStaff: (params) => apiClient.get(API_ENDPOINTS.CLEANING_STAFF, { params }),
+  createCleaningStaff: (data) => apiClient.post(API_ENDPOINTS.CLEANING_STAFF, data),
+  updateCleaningStaff: (id, data) => apiClient.put(API_ENDPOINTS.CLEANING_STAFF_DETAIL(id), data),
+  deleteCleaningStaff: (id) => apiClient.delete(API_ENDPOINTS.CLEANING_STAFF_DETAIL(id)),
 
   // Users
   getUsers: (params) => apiClient.get(API_ENDPOINTS.USERS, { params }),
@@ -156,6 +164,15 @@ const apiService = {
   exportStaffDirectory: () => apiClient.get('/export/staff-directory/', { responseType: 'blob' }),
   exportStudentDirectory: () => apiClient.get('/export/student-directory/', { responseType: 'blob' }),
   exportEmployeeDirectory: () => apiClient.get('/export/employee-directory/', { responseType: 'blob' }),
+  
+  // Profile Change Requests
+  getProfileChangeRequests: (params) => apiClient.get(API_ENDPOINTS.PROFILE_CHANGE_REQUESTS, { params }),
+  getMyProfileChangeRequests: () => apiClient.get(API_ENDPOINTS.MY_PROFILE_CHANGE_REQUESTS),
+  getPendingProfileChangeRequests: () => apiClient.get(API_ENDPOINTS.PROFILE_CHANGE_REQUESTS_PENDING),
+  createProfileChangeRequest: (data) => apiClient.post(API_ENDPOINTS.PROFILE_CHANGE_REQUESTS, data),
+  deleteProfileChangeRequest: (id) => apiClient.delete(API_ENDPOINTS.PROFILE_CHANGE_REQUEST_DETAIL(id)),
+  approveProfileChangeRequest: (id, adminNotes) => apiClient.post(API_ENDPOINTS.PROFILE_CHANGE_REQUEST_APPROVE(id), { admin_notes: adminNotes }),
+  rejectProfileChangeRequest: (id, adminNotes) => apiClient.post(API_ENDPOINTS.PROFILE_CHANGE_REQUEST_REJECT(id), { admin_notes: adminNotes }),
 
 };
 

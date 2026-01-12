@@ -100,9 +100,7 @@ const HODDashboard = () => {
           <Box>
             <Typography variant="h4" gutterBottom sx={{ 
               fontWeight: theme.typography.h4.fontWeight,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
+              color: 'primary.main'
             }}>
               HOD Dashboard
             </Typography>
@@ -147,8 +145,8 @@ const HODDashboard = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.info.light} 0%, ${theme.palette.primary.main} 100%)`,
-            color: theme.palette.primary.contrastText,
+            background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+            color: theme.palette.success.contrastText,
             height: '100%'
           }}>
             <CardContent>
@@ -167,8 +165,8 @@ const HODDashboard = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.light} 100%)`,
-            color: theme.palette.primary.contrastText,
+            background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`,
+            color: theme.palette.warning.contrastText,
             height: '100%'
           }}>
             <CardContent>
@@ -187,8 +185,8 @@ const HODDashboard = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ 
-            background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.info.light} 100%)`,
-            color: theme.palette.primary.contrastText,
+            background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.light} 100%)`,
+            color: theme.palette.info.contrastText,
             height: '100%'
           }}>
             <CardContent>

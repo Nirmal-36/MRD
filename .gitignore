@@ -52,3 +52,4 @@ build/
 
 # OS
 Thumbs.db
+backend/.env
