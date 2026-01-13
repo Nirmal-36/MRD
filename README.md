@@ -1,172 +1,106 @@
-<div align="center">
-  <img src="frontend/public/klh-university-logo.png" alt="KLH MedCare Logo" width="300"/>
-  
-  # KLH MedCare
-  ### Healthcare Management Platform for KL University Hospital
-  
-  [![Django](https://img.shields.io/badge/Django-5.2.7-green.svg)](https://www.djangoproject.com/)
-  [![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://reactjs.org/)
-  [![Material-UI](https://img.shields.io/badge/Material--UI-7.3.4-007FFF.svg)](https://mui.com/)
-  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-  
-  *Streamline medical operations with advanced patient care, inventory management, and intelligent analytics*
-  
-</div>
+# KLH MedCare
+## Healthcare Management Platform for KL University Hospital
 
----
+A comprehensive healthcare management system designed for KL University Hospital to digitize medical operations, manage patient records, inventory, and provide analytics.
 
-## 🏥 About KLH MedCare
+## Overview
 
-KLH MedCare is a comprehensive healthcare management platform designed specifically for KL University Hospital. Built with modern technologies and best practices, it digitizes medical room operations, enhances patient care, and provides real-time insights for better decision-making.
+KLH MedCare streamlines hospital operations with role-based access control, patient management, medicine inventory tracking, bed allocation, and comprehensive reporting capabilities.
 
-**Key Highlights:**
-- 🔐 Advanced role-based access control (8 user types)
-- 📊 Real-time analytics and reporting
-- 💊 Smart inventory management with auto-alerts
-- 🛏️ Intelligent bed allocation system
-- 📱 Mobile-responsive design
-- 📤 Comprehensive Excel export functionality
-- 🔄 Offline support with data sync
+**Technology Stack:**
+- Backend: Django 5.2.7, Django REST Framework, MySQL
+- Frontend: React 19.2.0, Material-UI 7.3.4
+- Authentication: Token-based with role-based permissions
 
-## 🚀 Features
+## Features
 
 ### Core Modules
 - **User Management** - Role-based access (Admin, Principal, HOD, Doctor, Nurse, Pharmacist, Student, Employee)
-- **Patient Register** - Complete medical records with diagnosis and treatment tracking
-- **Treatment History** - Track patient visits, symptoms, diagnosis, and prescribed medications
+- **Patient Records** - Medical records with diagnosis and treatment tracking
+- **Treatment Management** - Visit tracking, symptoms, diagnosis, and prescriptions
 - **Medicine Inventory** - Stock management with low-stock alerts and expiry tracking
-- **Bed Management** - Real-time bed allocation and discharge system
-- **Cleaning Records** - Daily cleaning schedule and maintenance tracking
-- **Analytics Dashboard** - Reports on patient visits, medicine usage, and bed utilization
+- **Bed Management** - Real-time bed allocation and discharge
+- **Cleaning Records** - Maintenance schedule tracking
+- **Analytics** - Dashboards and reports for all roles
 
-### Key Features
-- Email-based OTP password reset system
-- Department-based access control for HODs
-- Automated medicine stock alerts
-- Treatment and prescription management
-- Bed allocation with patient tracking
-- Duplicate bed/patient allocation prevention
-- Real-time availability status
-- Mobile-responsive interface
+### Security
+- Token-based authentication
+- Email OTP password reset
+- Rate limiting and account lockout
+- Staff registration approval workflow
+- Department-based access control
 
-### Tech Stack
-- **Backend:** Django 5.2.7, Django REST Framework 3.16.1, MySQL 9.5.0
-- **Frontend:** React 19.2.0, Material-UI 7.3.4
-- **Authentication:** JWT tokens with role-based permissions
-- **Email:** Django SMTP with Gmail for OTP delivery
-- **Additional:** Celery for async tasks, Redis for caching, Sentry for error tracking
-
-## 📁 Project Structure
+## Project Structure
 ```
-klh-medcare/
-├── backend/                    # Django REST API
-│   ├── api/                   # Export functionality (17 endpoints)
-│   │   ├── export_utils.py   # Common Excel utilities
-│   │   ├── export_patients.py # Patient data exports
-│   │   ├── export_medicines.py # Medicine exports
-│   │   ├── export_beds.py    # Bed management exports
-│   │   └── export_others.py  # Cleaning & directory exports
-│   ├── users/                 # User management & authentication
-│   │   ├── tests/            # Unit & integration tests
-│   │   ├── models.py         # User model with 9 indexes
-│   │   ├── validators.py     # Phone, email, username validation
-│   │   ├── security_utils.py # Rate limiting & lockout
-│   │   └── views.py          # API endpoints
-│   ├── patients/              # Patient management
-│   ├── medicines/             # Medicine inventory
-│   ├── beds/                  # Bed allocation
-│   ├── cleaning/              # Cleaning schedules
-│   ├── mrd_system/           # Project settings
-│   │   ├── settings.py       # Environment-based config
-│   │   ├── security_middleware.py
-│   │   └── urls.py           # API routing + docs
-│   ├── requirements.txt       # Python dependencies
+MRD/
+├── backend/
+│   ├── api/                  # Analytics and export APIs
+│   ├── users/                # Authentication and user management
+│   ├── patients/             # Patient and treatment management
+│   ├── medicines/            # Medicine inventory
+│   ├── beds/                 # Bed allocation
+│   ├── cleaning/             # Cleaning records
+│   ├── mrd_system/           # Settings and configuration
 │   └── manage.py
-├── frontend/                   # React frontend
-│   ├── public/
-│   │   ├── klh-medcare-logo.svg    # Primary logo
-│   │   └── klh-medcare-icon.svg    # App icon
+├── frontend/
 │   ├── src/
 │   │   ├── components/       # Reusable components
-│   │   │   ├── common/       # Toast, Sidebar, Logo, etc.
-│   │   │   ├── layouts/      # Role-based layouts
-│   │   │   └── exports/      # Export button components
-│   │   │       ├── PatientExportButton.js
-│   │   │       ├── MedicineExportButton.js
-│   │   │       ├── BedExportButton.js
-│   │   │       ├── OtherExportButton.js
-│   │   │       └── MasterExportButton.js
-│   │   ├── hooks/            # Custom React hooks
-│   │   │   ├── useFormValidation.js
-│   │   │   ├── useOnlineStatus.js
-│   │   │   └── useSessionTimeout.js
-│   │   ├── pages/            # Route pages
-│   │   │   ├── Auth/         # Login, Register, ForgotPassword
-│   │   │   ├── Doctor/       # Doctor dashboard & features
-│   │   │   ├── Patient/      # Patient dashboard
-│   │   │   ├── Pharmacist/   # Pharmacy management
-│   │   │   ├── Principal/    # Principal dashboard
-│   │   │   └── Common/       # Shared pages (Profile, Reports)
-│   │   ├── contexts/         # AuthContext
-│   │   ├── services/         # API service layer
-│   │   └── utils/            # Export utilities
-│   ├── package.json
-│   └── .gitignore
-├── .gitignore                 # Git ignore rules
-└── README.md                  # This file
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API services
+│   │   └── App.js
+│   └── package.json
+└── README.md
 ```
 
-## 🚀 Quick Start
+## Installation
 
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
 - MySQL 8.0+
 
-### 1. Clone Repository
+### Backend Setup
 
+1. Clone repository
 ```bash
 git clone https://github.com/Nirmal-36/MRD.git
-cd MRD
+cd MRD/backend
 ```
 
-### 2. Backend Setup
+2. Create virtual environment
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+```
 
-Create `.env` file in `backend/` directory:
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+4. Configure environment variables in `.env`
 ```env
-SECRET_KEY=your-secret-key-here
+SECRET_KEY=your-secret-key
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Database (MySQL)
 DB_NAME=klh_medcare_db
 DB_USER=root
 DB_PASSWORD=your-password
 DB_HOST=localhost
 DB_PORT=3306
-
-# Email (for OTP)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
-DEFAULT_FROM_EMAIL=your-email@gmail.com
 ```
 
-Install and run:
+5. Run migrations
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Backend runs at: **http://localhost:8000**
+Backend: http://localhost:8000
 
-### 3. Frontend Setup
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -174,102 +108,81 @@ npm install
 npm start
 ```
 
-Frontend runs at: **http://localhost:3000**
-
-### 4. Default Admin Credentials
-
-```
-Username: mrd_owner
-Password: mrd_pswd_1234
-```
-
-Login at: http://localhost:3000/login## 📚 API Endpoints
+Frontend: http://localhost:3000## API Endpoints
 
 ### Authentication
 - `POST /api/users/login/` - User login
-- `POST /api/users/logout/` - User logout
-- `POST /api/users/register/` - Patient/employee registration
-- `POST /api/users/staff-register/` - Staff registration (requires admin approval)
-- `POST /api/users/request-otp/` - Request OTP for password reset
-- `POST /api/users/verify-otp/` - Verify OTP code
-- `POST /api/users/reset-password/` - Reset password with verified OTP
-
-### User Management
-- `GET /api/users/` - List all users (admin/principal only)
-- `GET /api/users/me/` - Get current user profile
-- `PATCH /api/users/me/` - Update current user profile
-- `GET /api/users/pending-approvals/` - List pending staff approvals (admin only)
-- `POST /api/users/{id}/approve/` - Approve staff registration (admin only)
+- `POST /api/users/patient_register/` - Patient registration
+- `POST /api/users/register/` - Staff registration
+- `POST /api/users/forgot_password/` - Request password reset OTP
+- `POST /api/users/verify_otp/` - Verify OTP
+- `POST /api/users/reset_password/` - Reset password
 
 ### Patient Management
-- `GET /api/patients/` - List patients (filtered by role)
-- `POST /api/patients/` - Create patient record (medical staff only)
+- `GET /api/patients/` - List patients
+- `POST /api/patients/` - Create patient record
 - `GET /api/patients/{id}/` - Get patient details
-- `PATCH /api/patients/{id}/` - Update patient record
-- `GET /api/patients/link-status/` - Check patient-user linking status
+- `PATCH /api/patients/{id}/` - Update patient
 
 ### Treatment Management
-- `GET /api/treatments/` - List treatments (filtered by role)
-- `POST /api/treatments/` - Create treatment record (doctor only)
-- `GET /api/treatments/{id}/` - Get treatment details
-- `GET /api/treatments/today/` - Get today's treatments
-- `GET /api/treatments/follow-ups/` - Get upcoming follow-ups
+- `GET /api/treatments/` - List treatments
+- `POST /api/treatments/` - Create treatment
+- `GET /api/treatments/today/` - Today's treatments
+- `GET /api/treatments/follow-ups/` - Follow-up appointments
 
 ### Medicine Management
-- `GET /api/medicines/` - List all medicines
-- `POST /api/medicines/` - Add medicine (pharmacist only)
-- `PATCH /api/medicines/{id}/` - Update medicine stock
-- `GET /api/medicines/low-stock/` - Get low stock medicines
-- `GET /api/medicine-transactions/` - List medicine transactions
-- `POST /api/medicine-transactions/` - Record medicine transaction
+- `GET /api/medicines/` - List medicines
+- `POST /api/medicines/` - Add medicine
+- `GET /api/medicines/low-stock/` - Low stock alerts
+- `POST /api/medicine-transactions/` - Record transaction
 
 ### Bed Management
-- `GET /api/beds/` - List all beds with status
-- `POST /api/beds/` - Add new bed (admin/medical staff)
-- `GET /api/beds/available/` - Get available beds
-- `GET /api/bed-allocations/` - List bed allocations
-- `POST /api/bed-allocations/` - Allocate bed to patient (doctor only)
-- `POST /api/bed-allocations/{id}/discharge/` - Discharge patient (doctor only)
+- `GET /api/beds/` - List beds
+- `POST /api/bed-allocations/` - Allocate bed
+- `POST /api/bed-allocations/{id}/discharge/` - Discharge patient
 
-### Analytics & Reports
-- `GET /api/dashboard/principal/` - Principal dashboard (student/staff health stats)
-- `GET /api/dashboard/hod/` - HOD dashboard (department-specific stats)
-- `GET /api/dashboard/doctor/` - Doctor dashboard (patient stats)
-- `GET /api/reports/student-health/` - Top diagnoses affecting students
-- `GET /api/reports/high-risk-students/` - Students with allergies/chronic conditions
-- `GET /api/reports/utilization-rate/` - Visit frequency trends
-- `GET /api/reports/critical-stock/` - Low stock medicines and most used items
-- `GET /api/reports/bed-capacity/` - Bed utilization report
+### Analytics
+- `GET /api/dashboard/principal/` - Principal dashboard
+- `GET /api/dashboard/hod/` - HOD dashboard
+- `GET /api/reports/student-health/` - Health reports
+- `GET /api/reports/bed-capacity/` - Bed utilization
 
-### Cleaning Records
-- `GET /api/cleaning/records/` - List cleaning records
-- `POST /api/cleaning/records/` - Add cleaning record
-- `GET /api/cleaning/staff/` - List cleaning staff
+## Deployment
 
-## 📁 Project Structure
+### Production Setup
 
+1. Update environment variables
+```env
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com
+SECRET_KEY=strong-random-key
 ```
-MRD/
-├── backend/
-│   ├── api/                    # Dashboard and analytics APIs
-│   ├── users/                  # User authentication and management
-│   ├── patients/              # Patient and treatment management
-│   ├── medicines/             # Medicine inventory and transactions
-│   ├── beds/                  # Bed allocation system
-│   ├── cleaning/              # Cleaning records
-│   ├── mrd_system/            # Project settings and configuration
-│   ├── logs/                  # Application logs
-│   ├── requirements.txt       # Python dependencies
-│   └── manage.py
-├── frontend/
-│   ├── src/
-│   │   ├── components/        # Reusable React components
-│   │   ├── pages/             # Page components by role
-│   │   ├── contexts/          # React contexts (Auth, Theme)
-│   │   ├── services/          # API service layer
-│   │   └── App.js
-│   ├── public/
-│   └── package.json
-├── .gitignore
-└── README.md
+
+2. Run migrations
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py collectstatic
 ```
+
+3. Build frontend
+```bash
+cd frontend
+npm run build
+```
+
+### Security Checklist
+- Set strong SECRET_KEY
+- Configure HTTPS
+- Update ALLOWED_HOSTS
+- Enable database backups
+- Configure production SMTP
+- Review CORS settings
+
+## License
+
+MIT License
+
+## Contact
+
+Developed for KL University Hospital
