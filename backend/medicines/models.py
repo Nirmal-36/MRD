@@ -101,12 +101,32 @@ class MedicineTransaction(models.Model):
     date = models.DateTimeField()
     reference_number = models.CharField(max_length=50, blank=True)  # Invoice/Bill number
     supplier = models.CharField(max_length=200, blank=True)  # For received items
-    patient = models.CharField(max_length=200, blank=True)  # For issued items
+    
+    # Patient Reference - Improved with ForeignKey for data integrity
+    patient_record = models.ForeignKey(
+        'patients.Patient',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='medicine_transactions',
+        help_text='Linked patient for issued medicines'
+    )
+    patient = models.CharField(
+        max_length=200, 
+        blank=True,
+        help_text='Patient name for display (auto-populated from patient_record or manual for old records)'
+    )
     
     # System Fields
     performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     remarks = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        # Auto-populate patient name from patient_record if available
+        if self.patient_record and not self.patient:
+            self.patient = self.patient_record.name
+        super().save(*args, **kwargs)
     
     def __str__(self):
         # Use transaction_type directly for display

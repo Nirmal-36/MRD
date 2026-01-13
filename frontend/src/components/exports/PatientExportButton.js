@@ -88,16 +88,14 @@ const PatientExportButton = ({ patientId = null, sx }) => {
             {patientId ? 'My Treatments' : 'All Treatments'}
           </ListItemText>
         </MenuItem>
+        {isStaff && <Divider />}
         {isStaff && (
-          <>
-            <Divider />
-            <MenuItem onClick={handleExportHighRisk}>
-              <ListItemIcon>
-                <WarningIcon fontSize="small" color="warning" />
-              </ListItemIcon>
-              <ListItemText>High-Risk Patients</ListItemText>
-            </MenuItem>
-          </>
+          <MenuItem onClick={handleExportHighRisk}>
+            <ListItemIcon>
+              <WarningIcon fontSize="small" color="warning" />
+            </ListItemIcon>
+            <ListItemText>High-Risk Patients</ListItemText>
+          </MenuItem>
         )}
       </Menu>
     </>

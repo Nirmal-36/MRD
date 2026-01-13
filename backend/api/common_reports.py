@@ -264,6 +264,9 @@ def critical_stock_status(request):
             start_date = timezone.now() - timedelta(days=months*30)
             end_date = timezone.now()
         
+        # Get department filter if provided
+        department = request.query_params.get('department', None)
+        
         # Critical stock medicines
         critical_stock = Medicine.objects.filter(
             current_stock__lte=F('minimum_stock_level'),
@@ -282,11 +285,17 @@ def critical_stock_status(request):
             total_value += value
         
         # Top 10 most used medicines (by transaction quantity)
-        most_used = MedicineTransaction.objects.filter(
+        most_used_query = MedicineTransaction.objects.filter(
             transaction_type='issued',
             date__gte=start_date,
             date__lte=end_date
-        ).values(
+        )
+        
+        # Apply department filter if provided using patient_record FK
+        if department:
+            most_used_query = most_used_query.filter(patient_record__user__department=department)
+        
+        most_used = most_used_query.values(
             'medicine__name', 'medicine__category', 'medicine__id'
         ).annotate(
             total_quantity=Sum('quantity'),

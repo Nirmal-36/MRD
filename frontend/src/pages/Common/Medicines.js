@@ -200,7 +200,7 @@ const Medicines = () => {
             <Box display="flex" alignItems="center" gap={theme.spacing(2)}>
               <PharmacyIcon sx={{ fontSize: 40, color: 'warning.main' }} />
               <Box>
-                                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="textSecondary">
                   Low Stock
                 </Typography>
                 <Typography variant="h5" fontWeight={theme.typography.h5.fontWeight}>

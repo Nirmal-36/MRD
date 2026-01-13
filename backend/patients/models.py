@@ -79,10 +79,17 @@ class Patient(models.Model):
                         full_name = f"{existing_user.first_name} {existing_user.last_name}"
                         if self.name != full_name:
                             self.name = full_name
+                    # Update phone from user if available
+                    if existing_user.phone:
+                        self.phone = existing_user.phone
                             
             except Exception as e:
                 # Log the error but don't fail the save
                 pass
+        
+        # If user is already linked, sync phone from user
+        if self.user and self.user.phone:
+            self.phone = self.user.phone
         
         # Validate no duplicate patient records for the same user
         if self.user:
@@ -202,7 +209,7 @@ class TreatmentMedicine(models.Model):
                 transaction_type='issued',
                 quantity=self.quantity,
                 date=timezone.now(),
-                patient=self.treatment.patient.name,
+                patient_record=self.treatment.patient,
                 performed_by=self.treatment.doctor,
                 remarks=f"Prescribed for treatment: {self.treatment.diagnosis}"
             )
@@ -238,7 +245,7 @@ class TreatmentMedicine(models.Model):
                     transaction_type='adjustment',
                     quantity=self.quantity,
                     date=timezone.now(),
-                    patient=self.treatment.patient.name if self.treatment else 'Unknown',
+                    patient_record=self.treatment.patient if self.treatment else None,
                     performed_by=self.treatment.doctor if self.treatment else None,
                     remarks=f"Stock restored: Treatment deleted within 5 minutes (Time elapsed: {int(time_elapsed.total_seconds())} seconds)"
                 )
@@ -251,7 +258,7 @@ class TreatmentMedicine(models.Model):
                     transaction_type='issued',
                     quantity=0,  # No quantity change, just logging
                     date=timezone.now(),
-                    patient=self.treatment.patient.name if self.treatment else 'Unknown',
+                    patient_record=self.treatment.patient if self.treatment else None,
                     performed_by=self.treatment.doctor if self.treatment else None,
                     remarks=f"Treatment deleted after 5 min grace period - Stock NOT restored ({self.quantity} {self.medicine.unit} already dispensed)"
                 )

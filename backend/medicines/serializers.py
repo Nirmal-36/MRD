@@ -132,10 +132,10 @@ class MedicineTransactionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'medicine', 'medicine_name', 'medicine_category',
             'transaction_type', 'quantity', 'date', 'reference_number',
-            'supplier', 'patient', 'performed_by', 'performed_by_name',
+            'supplier', 'patient_record', 'patient', 'performed_by', 'performed_by_name',
             'performed_by_display_id', 'remarks', 'stock_after_transaction', 'created_at'
         ]
-        read_only_fields = ['performed_by', 'created_at', 'stock_after_transaction']
+        read_only_fields = ['performed_by', 'created_at', 'stock_after_transaction', 'patient']
     
     def get_stock_after_transaction(self, obj):
         """Calculate what stock would be after this transaction"""

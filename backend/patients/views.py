@@ -190,6 +190,7 @@ class PatientViewSet(viewsets.ModelViewSet):
                 'id': getattr(user, 'pk', getattr(user, 'id', None)),
                 'username': user.username,
                 'full_name': f"{user.first_name} {user.last_name}".strip(),
+                'phone': getattr(user, 'phone', ''),
                 'user_type': getattr(user, 'user_type', 'unknown'),
                 'employee_id': getattr(user, 'employee_id', None),
                 'student_id': getattr(user, 'student_id', None),
@@ -358,7 +359,7 @@ class TreatmentViewSet(viewsets.ModelViewSet):
                         transaction_type='adjustment',
                         quantity=old_quantity,
                         date=timezone.now(),
-                        patient=treatment.patient.name,
+                        patient_record=treatment.patient,
                         performed_by=request.user,
                         remarks=f"Prescription update - restored old quantity. Treatment: {treatment.diagnosis}"
                     )
@@ -370,7 +371,7 @@ class TreatmentViewSet(viewsets.ModelViewSet):
                         transaction_type='issued',
                         quantity=new_quantity,
                         date=timezone.now(),
-                        patient=treatment.patient.name,
+                        patient_record=treatment.patient,
                         performed_by=request.user,
                         remarks=f"Prescription update - new quantity. Treatment: {treatment.diagnosis}"
                     )

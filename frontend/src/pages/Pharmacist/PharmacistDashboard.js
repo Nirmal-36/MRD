@@ -130,8 +130,8 @@ const PharmacistDashboard = () => {
       )}
 
       {/* Statistics Cards */}
-      <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid width="100%" container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
+        <Grid width="22.5%" item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -149,7 +149,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid width="22.5%" item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -170,7 +170,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid width="22.5%" item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -191,7 +191,7 @@ const PharmacistDashboard = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid width="22.5%" item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -262,8 +262,8 @@ const PharmacistDashboard = () => {
 
       {/* Pending Requests Section */}
       {dashboardData.pendingRequestsList.length > 0 && (
-        <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
-          <Grid item xs={12}>
+        <Grid width="100%" container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
+          <Grid width="100%" item xs={12}>
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={theme.spacing(2)}>

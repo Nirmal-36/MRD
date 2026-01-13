@@ -28,7 +28,7 @@ const InventoryManagement = ({ department = null }) => {
     useEffect(() => {
         fetchCriticalStock();
         // eslint-disable-next-line
-    }, [department]);
+    }, [department, startDate, endDate]);
 
     const fetchCriticalStock = async () => {
         try {

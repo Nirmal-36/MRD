@@ -23,11 +23,11 @@ import PrincipalLayout from "./components/layouts/PrincipalLayout";
 import HODLayout from "./components/layouts/HODLayout";
 
 import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
-import AvailableDoctors from "./pages/Doctor/AvailableDoctors";
+import AvailableDoctors from "./pages/Common/AvailableDoctors";
 import Patients from "./pages/Doctor/Patients";
 import Treatments from "./pages/Doctor/Treatments";
 import Beds from "./pages/Doctor/Beds";
-import Medicines from "./pages/Doctor/Medicines";
+import Medicines from "./pages/Common/Medicines";
 import CleaningRecords from "./pages/Doctor/CleaningRecords";
 
 import PharmacistDashboard from "./pages/Pharmacist/PharmacistDashboard";

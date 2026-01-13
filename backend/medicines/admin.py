@@ -86,16 +86,17 @@ class MedicineAdmin(admin.ModelAdmin):
 class MedicineTransactionAdmin(admin.ModelAdmin):
     list_display = [
         'medicine', 'transaction_type', 'quantity', 'date', 
-        'performed_by', 'supplier', 'patient'
+        'performed_by', 'supplier', 'patient_display'
     ]
     list_filter = [
         'transaction_type', 'date', 'performed_by', 'medicine__category'
     ]
     search_fields = [
-        'medicine__name', 'supplier', 'patient', 'reference_number', 'remarks'
+        'medicine__name', 'supplier', 'patient', 'patient_record__name', 
+        'patient_record__employee_student_id', 'reference_number', 'remarks'
     ]
     ordering = ['-date']
-    readonly_fields = ['created_at']
+    readonly_fields = ['created_at', 'patient_display']
     date_hierarchy = 'date'
     
     fieldsets = (
@@ -103,7 +104,7 @@ class MedicineTransactionAdmin(admin.ModelAdmin):
             'fields': ('medicine', 'transaction_type', 'quantity', 'date')
         }),
         ('Reference Information', {
-            'fields': ('reference_number', 'supplier', 'patient'),
+            'fields': ('reference_number', 'supplier', 'patient_record', 'patient_display'),
             'description': 'Supplier for received items, Patient for issued items'
         }),
         ('System Information', {
@@ -111,6 +112,13 @@ class MedicineTransactionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def patient_display(self, obj):
+        """Display patient name from patient_record or fallback to patient field"""
+        if obj.patient_record:
+            return f"{obj.patient_record.name} ({obj.patient_record.employee_student_id})"
+        return obj.patient or 'N/A'
+    patient_display.short_description = 'Patient'
     
     def get_readonly_fields(self, request, obj=None):
         """Make performed_by readonly when editing"""

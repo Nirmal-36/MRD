@@ -213,12 +213,8 @@ class MedicineTransactionViewSet(viewsets.ModelViewSet):
         
         # HODs can only see transactions related to their department's patients
         if getattr(user, 'user_type', None) == 'hod':
-            from users.models import User
-            from patients.models import Patient
-            dept_users = User.objects.filter(department=user.department, is_active=True)
-            dept_patients = Patient.objects.filter(user__in=dept_users)
-            # Filter transactions that have patient field linked to department patients
-            return MedicineTransaction.objects.filter(patient__in=dept_patients.values_list('name', flat=True))
+            # Filter transactions by patient_record's user department
+            return MedicineTransaction.objects.filter(patient_record__user__department=user.department)
         
         # Medical staff can see all transactions
         return MedicineTransaction.objects.all()

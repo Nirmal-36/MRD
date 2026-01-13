@@ -147,6 +147,8 @@ const Patients = () => {
   };
 
   const handleUserSelect = (user) => {
+    console.log('Selected user object:', user);
+    console.log('User phone:', user?.phone);
     if (user) {
       setFormData({
         ...formData,
@@ -155,6 +157,10 @@ const Patients = () => {
         name: user.full_name || `${user.first_name} ${user.last_name}`,
         phone: user.phone || '',
         patient_type: user.user_type === 'student' ? 'student' : 'staff',
+      });
+      console.log('Form data after update:', {
+        phone: user.phone || '',
+        name: user.full_name || `${user.first_name} ${user.last_name}`,
       });
     }
   };
@@ -458,6 +464,8 @@ const Patients = () => {
                   label="Phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  helperText={!formData.phone && formData.user ? "User hasn't provided phone number. Please add it here." : ""}
+                  required
                 />
               </Grid>
 

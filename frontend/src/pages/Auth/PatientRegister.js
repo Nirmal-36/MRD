@@ -274,7 +274,7 @@ const PatientRegister = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Phone Number (Optional)"
+                  label="Phone Number"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
@@ -284,7 +284,7 @@ const PatientRegister = () => {
                     pattern: '[6-9][0-9]{9}',
                   }}
                   error={touched.phone && Boolean(errors.phone)}
-                  helperText={touched.phone && errors.phone ? errors.phone : '10-digit Indian mobile number (optional)'}
+                  helperText={touched.phone && errors.phone ? errors.phone : '10-digit Indian mobile number'}
                 />
               </Grid>
 

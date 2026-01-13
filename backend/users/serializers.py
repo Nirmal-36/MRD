@@ -206,7 +206,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
-    phone = serializers.CharField(required=False, allow_blank=True, min_length=10, max_length=15)
+    phone = serializers.CharField(required=True, min_length=10, max_length=15)
     employee_id = serializers.CharField(required=False, allow_blank=True)
     student_id = serializers.CharField(required=False, allow_blank=True)
     
@@ -216,14 +216,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'password', 'confirm_password',
             'user_type', 'phone', 'employee_id', 'student_id', 'department'
         ]
-        extra_kwargs = {
-            'phone': {'required': False}
-        }
     
     def validate_phone(self, value):
-        """Validate Indian phone number format (optional)"""
-        if not value:  # Phone is optional
-            return value
+        """Validate Indian phone number format (required)"""
+        if not value:
+            raise serializers.ValidationError('Phone number is required.')
         try:
             validated_phone = validate_indian_phone(value)
             # Check if phone already exists
@@ -324,7 +321,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
     """Simplified registration for patients (students and employees)"""
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)
-    phone = serializers.CharField(required=False, allow_blank=True, min_length=10, max_length=15)
+    phone = serializers.CharField(required=True, min_length=10, max_length=15)
     
     class Meta:
         model = User
@@ -334,8 +331,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
             'designation', 'year_of_study', 'course'
         ]
         extra_kwargs = {
-            'user_type': {'required': True},
-            'phone': {'required': False}
+            'user_type': {'required': True}
         }
     
     def validate_user_type(self, value):
@@ -345,9 +341,9 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         return value
     
     def validate_phone(self, value):
-        """Validate Indian phone number format (optional)"""
-        if not value:  # Phone is optional
-            return value
+        """Validate Indian phone number format (required)"""
+        if not value:
+            raise serializers.ValidationError('Phone number is required.')
         try:
             validated_phone = validate_indian_phone(value)
             # Check if phone already exists

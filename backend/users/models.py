@@ -46,14 +46,14 @@ class User(AbstractUser):
         """Validate that the correct ID field is provided based on user type"""
         super().clean()
         
-        # Validate phone number format
-        if self.phone:
-            try:
-                validate_indian_phone(self.phone)
-            except ValidationError as e:
-                raise ValidationError({'phone': e.message})
-        else:
+        # Validate phone number format (required)
+        if not self.phone:
             raise ValidationError({'phone': 'Phone number is required.'})
+        
+        try:
+            validate_indian_phone(self.phone)
+        except ValidationError as e:
+            raise ValidationError({'phone': e.message})
         
         # Validate email domain
         if self.email:
