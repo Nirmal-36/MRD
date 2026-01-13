@@ -63,7 +63,7 @@ def send_otp_email(email, otp):
     Send OTP via email using Django's email backend
     """
     try:
-        subject = "MRD System - Password Reset OTP"
+        subject = "KLH MedCare - Password Reset OTP"
         message = f"""
 Hello,
 
@@ -76,7 +76,7 @@ This OTP is valid for 10 minutes.
 If you did not request a password reset, please ignore this email.
 
 Best regards,
-MRD System Team
+KLH MedCare Team
         """.strip()
         
         from_email = settings.DEFAULT_FROM_EMAIL
