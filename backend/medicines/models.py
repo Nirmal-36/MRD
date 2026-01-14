@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 
 class Medicine(models.Model):
@@ -93,7 +95,13 @@ class MedicineTransaction(models.Model):
         ('adjustment', 'Stock Adjustment'),
     )
     
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='transactions')
+    # medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='transactions')
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE,
+        related_name='transactions',
+        db_constraint=False
+    )
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     
@@ -109,7 +117,8 @@ class MedicineTransaction(models.Model):
         null=True,
         blank=True,
         related_name='medicine_transactions',
-        help_text='Linked patient for issued medicines'
+        help_text='Linked patient for issued medicines',
+        db_constraint=False
     )
     patient = models.CharField(
         max_length=200, 
@@ -118,9 +127,20 @@ class MedicineTransaction(models.Model):
     )
     
     # System Fields
-    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    # performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_constraint=False
+    )
     remarks = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if not self.performed_by:
+            raise ValidationError({'performed_by': 'Transaction must be performed by a user.'})
     
     def save(self, *args, **kwargs):
         # Auto-populate patient name from patient_record if available
@@ -153,7 +173,13 @@ class StockRequest(models.Model):
         ('urgent', 'Urgent'),
     )
     
-    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='stock_requests')
+    # medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='stock_requests')
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE,
+        related_name='stock_requests',
+        db_constraint=False
+    )
     requested_quantity = models.IntegerField(validators=[MinValueValidator(1)])
     current_stock = models.IntegerField()  # Stock at time of request
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
@@ -164,8 +190,24 @@ class StockRequest(models.Model):
     
     # Status Management
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='stock_requests_made')
-    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_requests_approved')
+    # requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='stock_requests_made')
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_requests_made',
+        db_constraint=False
+    )
+    # approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_requests_approved')
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='stock_requests_approved',
+        db_constraint=False
+    )
     
     # Timestamps
     requested_date = models.DateTimeField(auto_now_add=True)
@@ -174,6 +216,15 @@ class StockRequest(models.Model):
     
     # System Fields
     notes = models.TextField(blank=True)
+
+    def clean(self):
+        if not self.requested_by:
+            raise ValidationError({'requested_by': 'Stock request must be created by a user.'})
+        
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.medicine.name} - {self.requested_quantity} units ({self.status})"

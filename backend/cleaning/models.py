@@ -50,19 +50,37 @@ class CleaningRecord(models.Model):
     )
     
     # System Fields - Who recorded this cleaning
+    # recorded_by = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.CASCADE,
+    #     related_name='cleaning_records_made',
+    #     limit_choices_to={'user_type__in': ['doctor', 'nurse']},
+    #     help_text="Doctor or nurse who recorded this cleaning"
+    # )
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='cleaning_records_made',
         limit_choices_to={'user_type__in': ['doctor', 'nurse']},
+        db_constraint=False,
         help_text="Doctor or nurse who recorded this cleaning"
     )
+
     recorded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def clean(self):
         """Validate cleaning times"""
         super().clean()
+
+        # Enforce recorder logically (not DB-level)
+        if not self.recorded_by:
+            raise ValidationError({
+                'recorded_by': 'Cleaning record must be recorded by a doctor or nurse.'
+            })
+        
         if self.start_time and self.end_time:
             if self.end_time <= self.start_time:
                 raise ValidationError({

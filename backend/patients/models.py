@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 
 class Patient(models.Model):
@@ -16,7 +17,15 @@ class Patient(models.Model):
     )
     
     # Link to registered user (this establishes the relationship)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
+    # user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='patient_record',
+        db_constraint=False
+    )
     
     # Basic Information - Employee ID/Student Roll No (combined field)
     employee_student_id = models.CharField(max_length=20, unique=True, verbose_name="Employee ID/Student Roll No")
@@ -34,9 +43,21 @@ class Patient(models.Model):
     chronic_conditions = models.TextField(blank=True)
     
     # System Fields
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_patients')
+    # created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_patients')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_patients',
+        db_constraint=False
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if not self.created_by:
+            raise ValidationError({'created_by': 'Patient record must be created by a user.'})
     
     def __str__(self):
         return f"{self.name} ({self.employee_student_id})"
@@ -115,8 +136,22 @@ class Treatment(models.Model):
         ('critical', 'Critical'),
     )
     
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='treatments')
-    doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='treatments_given')
+    # patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='treatments')
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='treatments',
+        db_constraint=False
+    )
+    # doctor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='treatments_given')
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='treatments_given',
+        db_constraint=False
+    )
     
     # Visit Information
     visit_date = models.DateTimeField()
@@ -136,6 +171,10 @@ class Treatment(models.Model):
     # System Fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if not self.doctor:
+            raise ValidationError({'doctor': 'Treatment must be recorded by a doctor.'})
     
     def __str__(self):
         return f"{self.patient.name} - {self.visit_date.strftime('%Y-%m-%d')}"
@@ -168,8 +207,20 @@ class TreatmentMedicine(models.Model):
     Many-to-Many relationship between Treatment and Medicine
     with additional fields for quantity and dosage
     """
-    treatment = models.ForeignKey('Treatment', on_delete=models.CASCADE, related_name='prescribed_medicines')
-    medicine = models.ForeignKey('medicines.Medicine', on_delete=models.PROTECT, related_name='prescriptions')
+    # treatment = models.ForeignKey('Treatment', on_delete=models.CASCADE, related_name='prescribed_medicines')
+    treatment = models.ForeignKey(
+        Treatment,
+        on_delete=models.CASCADE,
+        related_name='prescribed_medicines',
+        db_constraint=False
+    )
+    # medicine = models.ForeignKey('medicines.Medicine', on_delete=models.PROTECT, related_name='prescriptions')
+    medicine = models.ForeignKey(
+        'medicines.Medicine',
+        on_delete=models.PROTECT,
+        related_name='prescriptions',
+        db_constraint=False
+    )
     quantity = models.IntegerField(help_text="Quantity prescribed")
     dosage = models.CharField(max_length=200, help_text="e.g., '1 tablet twice daily'")
     duration_days = models.IntegerField(default=7, help_text="Treatment duration in days")

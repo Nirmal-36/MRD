@@ -37,7 +37,15 @@ class User(AbstractUser):
     
     # Admin approval for medical staff
     is_approved = models.BooleanField(default=False)  # Medical staff need admin approval
-    approved_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    # approved_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    approved_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_users',
+        db_constraint=False
+    )
     approved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -122,7 +130,8 @@ class ProfileChangeRequest(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='profile_change_requests',
-        help_text="User requesting the change"
+        help_text="User requesting the change",
+        db_constraint=False
     )
     
     # Current values
@@ -147,7 +156,8 @@ class ProfileChangeRequest(models.Model):
         blank=True,
         related_name='reviewed_change_requests',
         limit_choices_to={'user_type': 'admin'},
-        help_text="Admin who reviewed this request"
+        help_text="Admin who reviewed this request",
+        db_constraint=False
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     admin_notes = models.TextField(blank=True, help_text="Admin's notes or reason for rejection")
@@ -161,15 +171,28 @@ class ProfileChangeRequest(models.Model):
         super().clean()
         
         # Check if at least one field is different from current
-        first_name_changed = self.requested_first_name and self.requested_first_name != self.current_first_name
-        last_name_changed = self.requested_last_name and self.requested_last_name != self.current_last_name
-        username_changed = self.requested_username and self.requested_username != self.current_username
+        # first_name_changed = self.requested_first_name and self.requested_first_name != self.current_first_name
+        # last_name_changed = self.requested_last_name and self.requested_last_name != self.current_last_name
+        # username_changed = self.requested_username and self.requested_username != self.current_username
+
+        changed = any([
+            self.requested_first_name and self.requested_first_name != self.current_first_name,
+            self.requested_last_name and self.requested_last_name != self.current_last_name,
+            self.requested_username and self.requested_username != self.current_username,
+        ])
         
-        if not (first_name_changed or last_name_changed or username_changed):
-            raise ValidationError('At least one field (first name, last name, or username) must be different from the current value.')
+        # if not (first_name_changed or last_name_changed or username_changed):
+        #     raise ValidationError('At least one field (first name, last name, or username) must be different from the current value.')
+
+        if not changed:
+            raise ValidationError('At least one field must be changed.')
         
         # Validate username uniqueness if changing
-        if username_changed:
+        # if username_changed:
+        #     if User.objects.filter(username=self.requested_username).exclude(id=self.user.id).exists():
+        #         raise ValidationError({'requested_username': 'This username is already taken.'})
+
+        if self.requested_username:
             if User.objects.filter(username=self.requested_username).exclude(id=self.user.id).exists():
                 raise ValidationError({'requested_username': 'This username is already taken.'})
     
