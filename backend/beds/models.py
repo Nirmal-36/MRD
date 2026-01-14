@@ -110,9 +110,16 @@ class BedAllocation(models.Model):
     discharge_notes = models.TextField(blank=True)
     
     # System Fields
+    # allocated_by = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL, 
+    #     on_delete=models.CASCADE, 
+    #     related_name='bed_allocations_made'
+    # )
     allocated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='bed_allocations_made'
     )
     created_at = models.DateTimeField(auto_now_add=True)
