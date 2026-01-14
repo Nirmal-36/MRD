@@ -18,12 +18,12 @@ class Patient(models.Model):
     
     # Link to registered user (this establishes the relationship)
     # user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='patient_record',
+        related_name='patient_records',
         db_constraint=False
     )
     
