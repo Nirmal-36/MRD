@@ -17,6 +17,7 @@ import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -64,7 +65,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'mrd_system.security_middleware.SecurityHeadersMiddleware',  # Add security headers
+
+    'mrd_system.security_middleware.SecurityHeadersMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'mrd_system.middleware.DisableCSRFForAPIMiddleware',
@@ -247,6 +249,10 @@ CSRF_TRUSTED_ORIGINS = config(
     default='http://localhost:3000,http://127.0.0.1:3000',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization',
+]
 
 # Celery Configuration
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')

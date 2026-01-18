@@ -95,7 +95,7 @@ const DoctorDashboard = () => {
           Doctor Dashboard
         </Typography>
         <Typography 
-          variant="h6" 
+          variant="h6"
           sx={{ 
             opacity: 0.9, 
             color: "primary.contrastText",

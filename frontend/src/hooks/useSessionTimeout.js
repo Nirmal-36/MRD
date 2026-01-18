@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -11,20 +11,27 @@ export const useSessionTimeout = (timeout = 30, warningTime = 5) => {
   const [timeLeft, setTimeLeft] = useState(null);
   const navigate = useNavigate();
 
+  const showWarningRef = useRef(false);
+
   const timeoutMs = timeout * 60 * 1000;
   const warningMs = warningTime * 60 * 1000;
 
   const resetTimer = useCallback(() => {
     setShowWarning(false);
+    showWarningRef.current = false;
     setTimeLeft(null);
-    localStorage.setItem('lastActivity', Date.now().toString());
+    sessionStorage.setItem('lastActivity', Date.now().toString());
   }, []);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('lastActivity');
-    navigate('/login');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('lastActivity');
+
+    // Clear grace login backup as well
+    localStorage.removeItem('auth_grace');
+
+    navigate('/login', { replace: true });
   }, [navigate]);
 
   const extendSession = useCallback(() => {
@@ -32,7 +39,7 @@ export const useSessionTimeout = (timeout = 30, warningTime = 5) => {
   }, [resetTimer]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) return;
 
     // Track user activity
@@ -44,28 +51,33 @@ export const useSessionTimeout = (timeout = 30, warningTime = 5) => {
     });
 
     // Initialize last activity
-    if (!localStorage.getItem('lastActivity')) {
-      localStorage.setItem('lastActivity', Date.now().toString());
+    if (!sessionStorage.getItem('lastActivity')) {
+      sessionStorage.setItem('lastActivity', Date.now().toString());
     }
 
     // Check session timeout
     const checkTimeout = setInterval(() => {
-      const lastActivity = parseInt(localStorage.getItem('lastActivity') || '0');
+      const lastActivity = Number(sessionStorage.getItem('lastActivity') || 0);
+      if(!lastActivity) return;
+
       const now = Date.now();
       const elapsed = now - lastActivity;
 
-      // Show warning
-      if (elapsed >= (timeoutMs - warningMs) && elapsed < timeoutMs) {
-        setShowWarning(true);
-        const remaining = Math.ceil((timeoutMs - elapsed) / 1000 / 60);
-        setTimeLeft(remaining);
-      }
-
-      // Logout on timeout
+      // Show warning and Logout on timeout
       if (elapsed >= timeoutMs) {
         handleLogout();
+        return;
       }
-    }, 1000);
+
+      if (elapsed >= timeoutMs - warningMs) {
+        if (!showWarningRef.current) {
+          showWarningRef.current = true;
+          setShowWarning(true);
+        }
+        setTimeLeft(Math.ceil((timeoutMs - elapsed) / 60000));
+      }
+
+    }, 5000);
 
     return () => {
       activities.forEach(activity => {

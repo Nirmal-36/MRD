@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.user_type)) {
@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
       hod: '/hod',
     };
     
-    return <Navigate to={roleRoutes[user?.user_type] || '/login'} replace />;
+    return <Navigate to={roleRoutes[user?.user_type] || '/'} replace />;
   }
 
   return children;

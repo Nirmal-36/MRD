@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -7,9 +7,7 @@ import {
   Typography,
   Box,
   Link,
-  CircularProgress,
-  FormControlLabel,
-  Checkbox,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,7 +19,6 @@ const Login = () => {
   const { login } = useAuth();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
   // Form validation rules
   const validationRules = {
@@ -42,17 +39,7 @@ const Login = () => {
     handleChange: handleValidationChange,
     handleBlur,
     validateAll,
-    setValues,
   } = useFormValidation({ username: '', password: '' }, validationRules);
-
-  // Load saved username if "Remember Me" was checked
-  useEffect(() => {
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    if (savedUsername) {
-      setValues({ username: savedUsername, password: '' });
-      setRememberMe(true);
-    }
-  }, [setValues]);
 
   const handleChange = (e) => {
     handleValidationChange(e);
@@ -73,12 +60,6 @@ const Login = () => {
     const result = await login(formData);
 
     if (result.success) {
-      // Save username if "Remember Me" is checked
-      if (rememberMe) {
-        localStorage.setItem('rememberedUsername', formData.username);
-      } else {
-        localStorage.removeItem('rememberedUsername');
-      }
 
       showSuccess(`Welcome back, ${result.user.username}!`);
       
@@ -169,19 +150,6 @@ const Login = () => {
               autoComplete="off"
               error={touched.password && Boolean(errors.password)}
               helperText={touched.password && errors.password}
-            />
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
-                  color="primary"
-                />
-              }
-              label="Remember Me"
-              sx={{ mt: 1, mb: 2 }}
             />
 
             <Button

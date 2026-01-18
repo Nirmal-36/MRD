@@ -7,9 +7,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/common/Toast";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
-import { useSessionTimeout } from "./hooks/useSessionTimeout";
 import OfflineBanner from "./components/common/OfflineBanner";
-import SessionTimeoutWarning from "./components/common/SessionTimeoutWarning";
+import SessionManager from "./components/common/SessionManager";
+
 
 import Login from "./pages/Auth/Login";
 import PatientRegister from "./pages/Auth/PatientRegister";
@@ -89,10 +89,7 @@ function App() {
 function AppContent({ mode, setMode }) {
   // Online/Offline detection
   const isOnline = useOnlineStatus();
-  
-  // Session timeout management (now inside Router context)
-  const { showWarning, timeLeft, extendSession, handleLogout } = useSessionTimeout(30, 5);
-  
+
   // Access theme from ThemeProvider
   const theme = useTheme();
 
@@ -101,13 +98,7 @@ function AppContent({ mode, setMode }) {
       {/* Offline Banner */}
       <OfflineBanner isOnline={isOnline} />
       
-      {/* Session Timeout Warning */}
-      <SessionTimeoutWarning
-        open={showWarning}
-        timeLeft={timeLeft}
-        onExtend={extendSession}
-        onLogout={handleLogout}
-      />
+      <SessionManager />
       
       <Tooltip title={`Switch to ${mode === "light" ? "Dark" : "Light"} Mode`}>
         <IconButton

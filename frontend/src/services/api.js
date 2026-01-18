@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '../config/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,7 +12,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
@@ -29,9 +29,9 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      window.location.replace('/login');
     }
     return Promise.reject(error);
   }
