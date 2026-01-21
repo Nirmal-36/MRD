@@ -1,0 +1,150 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .import-form {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 30px;
+        background: #417690;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #ffffff;
+    }
+    .form-group input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px dashed #ffffff;
+        border-radius: 4px;
+        background: white;
+    }
+    .help-text {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.9em;
+        color: #ffffff;
+    }
+    .btn-submit {
+        background: #417690;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .btn-submit:hover {
+        background: #2e5266;
+    }
+    .btn-cancel {
+        background: #417690;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 10px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-cancel:hover {
+        background: #2e5266;
+    }
+    .btn-download {
+        background: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+    .btn-download:hover {
+        background: #218838;
+        color: white;
+    }
+    .instructions {
+        background: #03181f;
+        padding: 15px;
+        border-left: 4px solid #417690;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .instructions h3 {
+        margin-top: 0;
+        color: #417690;
+    }
+    .instructions ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+    .instructions li {
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="import-form">
+    <h1>{{ title }}</h1>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="{% url 'admin:medicines_medicine_template' %}" class="btn-download">
+            📥 Download Excel Template
+        </a>
+    </div>
+    
+    <div class="instructions">
+        <h3>📋 Instructions</h3>
+        <p><strong>Required columns:</strong></p>
+        <ul>
+            <li><strong>name</strong> - Medicine name (must be unique)</li>
+            <li><strong>category</strong> - One of: tablet, capsule, syrup, injection, ointment, drops, other</li>
+            <li><strong>manufacturer</strong> - Manufacturer name</li>
+            <li><strong>description</strong> - Medicine description</li>
+            <li><strong>unit</strong> - Unit of measurement (e.g., pieces, tablets, bottles, ml)</li>
+            <li><strong>unit_price</strong> - Price per unit (numeric)</li>
+            <li><strong>batch_number</strong> - Batch identification number</li>
+        </ul>
+        <p><strong>Optional columns:</strong></p>
+        <ul>
+            <li><strong>generic_name</strong> - Generic/chemical name (default: empty)</li>
+            <li><strong>minimum_stock_level</strong> - Minimum quantity alert (default: 10)</li>
+        </ul>
+        <p><strong>Note:</strong> All medicines will be imported with <code>current_stock = 0</code>. Pharmacists can then request stock for these medicines.</p>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            {{ form.excel_file.label_tag }}
+            {{ form.excel_file }}
+            <span class="help-text">{{ form.excel_file.help_text }}</span>
+            {% if form.excel_file.errors %}
+                <div class="errors">{{ form.excel_file.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <button type="submit" class="btn-submit">Import Medicines</button>
+            <a href="{% url 'admin:medicines_medicine_changelist' %}" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

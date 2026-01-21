@@ -23,13 +23,28 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.pyc
 
 # Django
 *.log
+logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
+staticfiles/
+.coverage
+htmlcov/
+*.pot
+
+# Environment variables
+.env
+backend/.env
+frontend/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Node
 node_modules/
@@ -37,10 +52,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 build/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
 
 # IDE
 .vscode/
@@ -48,8 +65,32 @@ build/
 *.swp
 *.swo
 *~
-.DS_Store
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
 # OS
+.DS_Store
 Thumbs.db
-backend/.env
+._*
+.Spotlight-V100
+.Trashes
+
+# Database backups
+backups/
+*.sql
+*.dump
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis
+dump.rdb
+
+# Misc
+*.bak
+*.tmp
+*.cache

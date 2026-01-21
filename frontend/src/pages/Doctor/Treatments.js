@@ -437,7 +437,10 @@ const Treatments = () => {
                 <Autocomplete
                   fullWidth
                   options={patients}
-                  getOptionLabel={(option) => `${option.name} - ${option.employee_student_id} (${option.patient_type})`}
+                  getOptionLabel={(option) => {
+                    const hasTreatment = treatments.some(t => t.patient === option.id || t.patient_id === option.id);
+                    return `${option.name} - ${option.employee_student_id} (${option.patient_type})${hasTreatment ? ' - Has Treatment Records' : ''}`;
+                  }}
                   value={patients.find(p => p.id === formData.patient) || null}
                   onChange={(event, newValue) => {
                     setFormData({ ...formData, patient: newValue ? newValue.id : '' });
@@ -451,18 +454,31 @@ const Treatments = () => {
                       helperText="Search by name or employee/student ID"
                     />
                   )}
-                  renderOption={(props, option) => (
+                  renderOption={(props, option) => {
+                    const hasTreatment = treatments.some(t => t.patient === option.id || t.patient_id === option.id);
+                    return (
                     <li {...props}>
                       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                        <Typography variant="body1" fontWeight="medium">
-                          {option.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body1" fontWeight="medium">
+                            {option.name}
+                          </Typography>
+                          {hasTreatment && (
+                            <Chip 
+                              label="Has Records" 
+                              size="small" 
+                              color="info"
+                              sx={{ height: '20px', fontSize: '0.7rem' }}
+                            />
+                          )}
+                        </Box>
                         <Typography variant="caption" color="textSecondary">
                           ID: {option.employee_student_id} | {option.patient_type} | Age: {option.age} | Blood: {option.blood_group || 'N/A'}
                         </Typography>
                       </Box>
                     </li>
-                  )}
+                    );
+                  }}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
               </Grid>

@@ -272,10 +272,12 @@ class StockRequestSerializer(serializers.ModelSerializer):
 class StockRequestApprovalSerializer(serializers.ModelSerializer):
     """Separate serializer for approval/rejection actions"""
     action_reason = serializers.CharField(write_only=True, required=False)
+    expiry_date = serializers.DateField(write_only=True, required=False, help_text="Required when approving stock requests")
+    batch_number = serializers.CharField(write_only=True, required=False, help_text="Optional batch number for the new stock")
     
     class Meta:
         model = StockRequest
-        fields = ['id', 'status', 'expected_delivery_date', 'notes', 'action_reason']
+        fields = ['id', 'status', 'expected_delivery_date', 'notes', 'action_reason', 'expiry_date', 'batch_number']
         read_only_fields = ['id']
     
     def validate_status(self, value):
@@ -296,3 +298,22 @@ class StockRequestApprovalSerializer(serializers.ModelSerializer):
                 )
         
         return value
+    
+    def validate(self, data):
+        """Validate expiry_date is provided when approving"""
+        status = data.get('status')
+        expiry_date = data.get('expiry_date')
+        
+        # Require expiry_date when approving stock request
+        if status == 'approved' and not expiry_date:
+            raise serializers.ValidationError({
+                'expiry_date': 'Expiry date is required when approving stock requests'
+            })
+        
+        # Validate expiry_date is not in the past
+        if expiry_date and expiry_date < timezone.now().date():
+            raise serializers.ValidationError({
+                'expiry_date': 'Expiry date cannot be in the past'
+            })
+        
+        return data

@@ -43,6 +43,8 @@ const StockRequests = () => {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(''); // 'approve' or 'reject'
   const [actionNotes, setActionNotes] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [batchNumber, setBatchNumber] = useState('');
   const [tabValue, setTabValue] = useState(0); // 0=pending, 1=approved, 2=rejected, 3=all
 
   const fetchRequests = async () => {
@@ -78,19 +80,34 @@ const StockRequests = () => {
     setSelectedRequest(request);
     setActionType(type);
     setActionNotes('');
+    setExpiryDate('');
+    setBatchNumber('');
     setActionDialogOpen(true);
   };
 
   const handleSubmitAction = async () => {
     try {
-      const endpoint = actionType === 'approve' 
-        ? apiService.approveStockRequest 
-        : apiService.rejectStockRequest;
-      
-      await endpoint(selectedRequest.id, { notes: actionNotes });
+      if (actionType === 'approve') {
+        // Validate expiry_date is required for approval
+        if (!expiryDate) {
+          setError('Expiry date is required when approving stock requests');
+          return;
+        }
+        
+        await apiService.approveStockRequest(selectedRequest.id, { 
+          expiry_date: expiryDate,
+          batch_number: batchNumber,
+          notes: actionNotes 
+        });
+      } else {
+        await apiService.rejectStockRequest(selectedRequest.id, { 
+          reason: actionNotes 
+        });
+      }
       
       setSuccess(`Stock request ${actionType}d successfully`);
       setActionDialogOpen(false);
+      setError('');
       fetchRequests();
     } catch (err) {
       console.error(`Error ${actionType}ing request:`, err);
@@ -341,9 +358,47 @@ const StockRequests = () => {
                 <strong>Quantity:</strong> {selectedRequest?.requested_quantity} units
               </Typography>
             </Alert>
+            
+            {actionType === 'approve' && (
+              <>
+                <Alert severity="info" sx={{ mb: theme.spacing(2) }}>
+                  <Typography variant="body2">
+                    <strong>⚠️ Required:</strong> You must provide the expiry date when approving stock requests.
+                  </Typography>
+                </Alert>
+                
+                <TextField
+                  fullWidth
+                  required
+                  label="Expiry Date"
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  inputProps={{
+                    min: new Date().toISOString().split('T')[0], // Prevent past dates
+                  }}
+                  sx={{ mb: theme.spacing(2) }}
+                  helperText="Medicine expiry date (required)"
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Batch Number"
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                  sx={{ mb: theme.spacing(2) }}
+                  placeholder="e.g., BATCH2026001"
+                  helperText="Batch identification number (optional but recommended)"
+                />
+              </>
+            )}
+            
             <TextField
               fullWidth
-              label="Notes (Optional)"
+              label={actionType === 'approve' ? 'Notes (Optional)' : 'Rejection Reason'}
               multiline
               rows={4}
               value={actionNotes}
@@ -358,6 +413,7 @@ const StockRequests = () => {
             onClick={handleSubmitAction}
             variant="contained"
             color={actionType === 'approve' ? 'success' : 'error'}
+            disabled={actionType === 'approve' && !expiryDate}
           >
             {actionType === 'approve' ? 'Approve' : 'Reject'}
           </Button>

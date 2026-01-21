@@ -1,8 +1,19 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
+from django.urls import reverse, path
 from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django import forms
 from .models import Medicine, MedicineTransaction, StockRequest
+import pandas as pd
+
+
+class ExcelImportForm(forms.Form):
+    excel_file = forms.FileField(
+        label='Select Excel File',
+        help_text='Upload an Excel file (.xlsx or .xls) with medicine data'
+    )
 
 
 @admin.register(Medicine)
@@ -80,6 +91,249 @@ class MedicineAdmin(admin.ModelAdmin):
         updated = queryset.update(is_active=False)
         self.message_user(request, f'{updated} medicines deactivated.')
     deactivate_medicines.short_description = 'Deactivate selected medicines'
+    
+    def get_urls(self):
+        """Add custom URLs for Excel import"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('import-excel/', self.admin_site.admin_view(self.import_excel), name='medicines_medicine_import'),
+            path('download-template/', self.admin_site.admin_view(self.download_template), name='medicines_medicine_template'),
+        ]
+        return custom_urls + urls
+    
+    def import_excel(self, request):
+        """Handle Excel file upload and import"""
+        if request.method == 'POST':
+            form = ExcelImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                excel_file = request.FILES['excel_file']
+                
+                # Validate file extension
+                if not excel_file.name.endswith(('.xlsx', '.xls')):
+                    messages.error(request, 'Invalid file format. Please upload an Excel file (.xlsx or .xls)')
+                    return redirect('..')
+                
+                try:
+                    # Read Excel file
+                    df = pd.read_excel(excel_file)
+                    
+                    # Required columns
+                    required_columns = ['name', 'category', 'manufacturer', 'description', 'unit', 'unit_price', 'batch_number']
+                    missing_columns = [col for col in required_columns if col not in df.columns]
+                    
+                    if missing_columns:
+                        messages.error(request, f'Missing required columns: {", ".join(missing_columns)}')
+                        return redirect('..')
+                    
+                    # Optional columns with defaults
+                    if 'generic_name' not in df.columns:
+                        df['generic_name'] = ''
+                    if 'minimum_stock_level' not in df.columns:
+                        df['minimum_stock_level'] = 10
+                    
+                    # Validate category values
+                    valid_categories = ['tablet', 'capsule', 'syrup', 'injection', 'ointment', 'drops', 'other']
+                    
+                    created_count = 0
+                    skipped_count = 0
+                    errors = []
+                    
+                    for index, row in df.iterrows():
+                        try:
+                            # Validate required fields
+                            name = str(row['name']).strip()
+                            if not name or pd.isna(row['name']):
+                                errors.append(f"Row {index + 2}: Medicine name is required")
+                                skipped_count += 1
+                                continue
+                            
+                            # Validate category
+                            category = str(row['category']).lower().strip()
+                            if category not in valid_categories:
+                                errors.append(f"Row {index + 2}: Invalid category '{row['category']}'. Must be one of: {', '.join(valid_categories)}")
+                                skipped_count += 1
+                                continue
+                            
+                            # Validate other required fields
+                            if pd.isna(row['manufacturer']) or not str(row['manufacturer']).strip():
+                                errors.append(f"Row {index + 2}: Manufacturer is required")
+                                skipped_count += 1
+                                continue
+                            
+                            if pd.isna(row['description']) or not str(row['description']).strip():
+                                errors.append(f"Row {index + 2}: Description is required")
+                                skipped_count += 1
+                                continue
+                            
+                            if pd.isna(row['unit']) or not str(row['unit']).strip():
+                                errors.append(f"Row {index + 2}: Unit is required")
+                                skipped_count += 1
+                                continue
+                            
+                            if pd.isna(row['unit_price']):
+                                errors.append(f"Row {index + 2}: Unit price is required")
+                                skipped_count += 1
+                                continue
+                            
+                            if pd.isna(row['batch_number']) or not str(row['batch_number']).strip():
+                                errors.append(f"Row {index + 2}: Batch number is required")
+                                skipped_count += 1
+                                continue
+                            
+                            # Check if medicine already exists
+                            if Medicine.objects.filter(name__iexact=name).exists():
+                                errors.append(f"Row {index + 2}: Medicine '{name}' already exists")
+                                skipped_count += 1
+                                continue
+                            
+                            # Create medicine with current_stock = 0
+                            Medicine.objects.create(
+                                name=name,
+                                generic_name=str(row['generic_name']).strip() if pd.notna(row['generic_name']) else '',
+                                category=category,
+                                manufacturer=str(row['manufacturer']).strip(),
+                                description=str(row['description']).strip(),
+                                current_stock=0,  # Always start with 0
+                                minimum_stock_level=int(row['minimum_stock_level']) if pd.notna(row['minimum_stock_level']) else 10,
+                                unit=str(row['unit']).strip(),
+                                unit_price=float(row['unit_price']),
+                                batch_number=str(row['batch_number']).strip(),
+                                is_active=True
+                            )
+                            created_count += 1
+                            
+                        except Exception as e:
+                            errors.append(f"Row {index + 2}: {str(e)}")
+                            skipped_count += 1
+                    
+                    # Display results
+                    if created_count > 0:
+                        messages.success(request, f'Successfully imported {created_count} medicines')
+                    if skipped_count > 0:
+                        messages.warning(request, f'{skipped_count} rows were skipped')
+                    if errors:
+                        for error in errors[:10]:  # Show first 10 errors
+                            messages.error(request, error)
+                        if len(errors) > 10:
+                            messages.error(request, f'... and {len(errors) - 10} more errors')
+                    
+                    return redirect('..')
+                    
+                except Exception as e:
+                    messages.error(request, f'Failed to process Excel file: {str(e)}')
+                    return redirect('..')
+        else:
+            form = ExcelImportForm()
+        
+        context = {
+            'form': form,
+            'title': 'Import Medicines from Excel',
+            'site_header': 'Medicine Import',
+            'site_title': 'Import',
+            'opts': self.model._meta,
+        }
+        return render(request, 'admin/medicines/import_excel.html', context)
+    
+    def download_template(self, request):
+        """Download Excel template for medicine import"""
+        from django.http import HttpResponse
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+        
+        # Create workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Medicines Template"
+        
+        # Headers
+        headers = [
+            'name', 'generic_name', 'category', 'manufacturer', 
+            'description', 'minimum_stock_level', 'unit', 'unit_price', 'batch_number'
+        ]
+        
+        # Style headers
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF")
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+        
+        # Add sample data
+        sample_data = [
+            ['Paracetamol 500mg', 'Paracetamol', 'tablet', 'ABC Pharma', 'Pain reliever and fever reducer', 50, 'pieces', 2.50, 'BATCH001'],
+            ['Amoxicillin 250mg', 'Amoxicillin', 'capsule', 'XYZ Labs', 'Antibiotic for bacterial infections', 30, 'pieces', 5.00, 'BATCH002'],
+            ['Cough Syrup', 'Dextromethorphan', 'syrup', 'MediCare', 'For dry cough relief', 20, 'bottles', 75.00, 'BATCH003']
+        ]
+        
+        for row_num, data in enumerate(sample_data, 2):
+            for col_num, value in enumerate(data, 1):
+                ws.cell(row=row_num, column=col_num, value=value)
+        
+        # Adjust column widths
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column].width = adjusted_width
+        
+        # Add instructions sheet
+        ws_instructions = wb.create_sheet("Instructions")
+        instructions = [
+            ["Medicine Import Template Instructions"],
+            [""],
+            ["Required Columns:"],
+            ["- name: Medicine name (must be unique)"],
+            ["- category: Must be one of: tablet, capsule, syrup, injection, ointment, drops, other"],
+            ["- manufacturer: Manufacturer name"],
+            ["- description: Medicine description"],
+            ["- unit: Unit of measurement (e.g., pieces, tablets, bottles, ml)"],
+            ["- unit_price: Price per unit (numeric value)"],
+            ["- batch_number: Batch identification number"],
+            [""],
+            ["Optional Columns (with defaults):"],
+            ["- generic_name: Generic/chemical name (default: empty)"],
+            ["- minimum_stock_level: Minimum quantity alert (default: 10)"],
+            [""],
+            ["Important Notes:"],
+            ["- All medicines will be imported with current_stock = 0"],
+            ["- Pharmacists can then request stock for these medicines"],
+            ["- Duplicate medicine names will be skipped"],
+            ["- All required fields must have values or row will be skipped"],
+            ["- Invalid category values will be rejected"]
+        ]
+        
+        for row_num, instruction in enumerate(instructions, 1):
+            cell = ws_instructions.cell(row=row_num, column=1, value=instruction[0])
+            if row_num == 1:
+                cell.font = Font(bold=True, size=14)
+            elif "Required Columns:" in instruction[0] or "Optional Columns" in instruction[0] or "Important Notes:" in instruction[0]:
+                cell.font = Font(bold=True)
+        
+        ws_instructions.column_dimensions['A'].width = 80
+        
+        # Prepare response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=medicine_import_template.xlsx'
+        wb.save(response)
+        
+        return response
+    
+    def changelist_view(self, request, extra_context=None):
+        """Add import button to changelist view"""
+        extra_context = extra_context or {}
+        extra_context['show_import_button'] = True
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(MedicineTransaction)
@@ -171,7 +425,7 @@ class StockRequestAdmin(admin.ModelAdmin):
         }),
         ('Status Management', {
             'fields': ('status', 'expected_delivery_date', 'notes'),
-            'description': 'Update status and delivery expectations'
+            'description': '⚠️ IMPORTANT: When approving via API, expiry_date and batch_number must be provided. Admin panel approvals should be followed by updating the medicine\'s expiry date manually.'
         }),
         ('System Information', {
             'fields': ('requested_by', 'requested_date', 'approved_by', 'approved_date'),
@@ -206,15 +460,24 @@ class StockRequestAdmin(admin.ModelAdmin):
     actions = ['approve_requests', 'mark_as_ordered']
     
     def approve_requests(self, request, queryset):
-        """Approve selected pending requests"""
+        """Approve selected pending requests - Note: Requires manual expiry date update"""
         pending_requests = queryset.filter(status='pending')
+        if not pending_requests.exists():
+            self.message_user(request, 'No pending requests selected.', level='warning')
+            return
+        
         updated = pending_requests.update(
             status='approved',
             approved_by=request.user,
             approved_date=timezone.now()
         )
-        self.message_user(request, f'{updated} stock requests approved.')
-    approve_requests.short_description = 'Approve selected pending requests'
+        
+        self.message_user(
+            request, 
+            f'{updated} stock requests approved. ⚠️ REMEMBER: Update expiry_date and batch_number for each medicine manually or use the API endpoint.',
+            level='warning'
+        )
+    approve_requests.short_description = '✓ Approve selected pending requests (requires manual expiry update)'
     
     def mark_as_ordered(self, request, queryset):
         """Mark approved requests as ordered"""
