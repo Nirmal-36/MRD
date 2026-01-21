@@ -59,6 +59,19 @@ export const API_ENDPOINTS = {
   PROFILE_CHANGE_REQUEST_REJECT: (id) => `${API_BASE_URL}/profile-change-requests/${id}/reject/`,
   PROFILE_CHANGE_REQUESTS_PENDING: `${API_BASE_URL}/profile-change-requests/pending/`,
   MY_PROFILE_CHANGE_REQUESTS: `${API_BASE_URL}/profile-change-requests/my_requests/`,
+  
+  // Export Endpoints
+  EXPORT_PATIENTS: `${API_BASE_URL}/export/patients/`,
+  EXPORT_TREATMENTS: `${API_BASE_URL}/export/treatments/`,
+  EXPORT_HIGH_RISK_PATIENTS: `${API_BASE_URL}/export/high-risk-patients/`,
+  EXPORT_MEDICINE_INVENTORY: `${API_BASE_URL}/export/medicine-inventory/`,
+  EXPORT_LOW_STOCK_MEDICINES: `${API_BASE_URL}/export/low-stock-medicines/`,
+  EXPORT_EXPIRING_MEDICINES: `${API_BASE_URL}/export/expiring-medicines/`,
+  EXPORT_MEDICINE_TRANSACTIONS: `${API_BASE_URL}/export/medicine-transactions/`,
+  EXPORT_STOCK_REQUESTS: `${API_BASE_URL}/export/stock-requests/`,
+  EXPORT_BED_ALLOCATIONS: `${API_BASE_URL}/export/bed-allocations/`,
+  EXPORT_BED_INVENTORY: `${API_BASE_URL}/export/bed-inventory/`,
+  EXPORT_CLEANING_RECORDS: `${API_BASE_URL}/export/cleaning-records/`,
 };
 
 export default API_BASE_URL;
