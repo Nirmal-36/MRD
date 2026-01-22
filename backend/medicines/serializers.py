@@ -200,10 +200,12 @@ class StockRequestSerializer(serializers.ModelSerializer):
     medicine_minimum_stock = serializers.CharField(source='medicine.minimum_stock_level', read_only=True)
     requested_by_name = serializers.CharField(source='requested_by.get_full_name', read_only=True)
     requested_by_display_id = serializers.CharField(source='requested_by.get_display_id', read_only=True)
-    approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True)
-    approved_by_display_id = serializers.CharField(source='approved_by.get_display_id', read_only=True)
     days_pending = serializers.SerializerMethodField()
     estimated_cost = serializers.SerializerMethodField()
+    approved_by_name = serializers.SerializerMethodField()
+    approved_by_display_id = serializers.SerializerMethodField()
+
+
     
     class Meta:
         model = StockRequest
@@ -231,6 +233,16 @@ class StockRequestSerializer(serializers.ModelSerializer):
         """Calculate estimated cost of the request"""
         return float(obj.requested_quantity * obj.medicine.unit_price)
     
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_full_name()
+        return None
+
+    def get_approved_by_display_id(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_display_id()
+        return None
+
     def validate_requested_quantity(self, value):
         """Validate requested quantity is positive"""
         if value <= 0:

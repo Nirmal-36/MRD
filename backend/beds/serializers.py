@@ -30,22 +30,29 @@ class BedSerializer(serializers.ModelSerializer):
     
     def get_current_patient(self, obj):
         """Get information about current patient"""
-        active_allocation = obj.allocations.filter(is_active=True).first()
-        if active_allocation:
-            return {
-                'name': active_allocation.patient_name,
-                'patient_id': active_allocation.patient_id,
-                'admission_date': active_allocation.admission_date,
-                'attending_doctor': active_allocation.attending_doctor.get_full_name(),
-                'attending_doctor_id': active_allocation.attending_doctor.get_display_id(),
-                'condition': active_allocation.condition,
-                'days_admitted': active_allocation.duration_days
-            }
-        return None
+        active_allocation = obj.allocations.filter(is_active=True).select_related(
+            'attending_doctor'
+        ).first()
+
+        if not active_allocation:
+            return None
+
+        doctor = active_allocation.attending_doctor
+
+        return {
+            'name': active_allocation.patient_name,
+            'patient_id': active_allocation.patient_id,
+            'admission_date': active_allocation.admission_date,
+            'attending_doctor': doctor.get_full_name() if doctor else None,
+            'attending_doctor_id': doctor.get_display_id() if doctor else None,
+            'condition': active_allocation.condition,
+            'days_admitted': active_allocation.duration_days,
+        }
+
     
     def get_total_allocations(self, obj):
         """Get total number of allocations for this bed"""
-        return obj.allocations.count()
+        return getattr(obj, '_alloc_count', obj.allocations.count())
     
     def validate_bed_number(self, value):
         """Validate bed number format and uniqueness"""
@@ -92,8 +99,8 @@ class BedAllocationSerializer(serializers.ModelSerializer):
     bed_equipment = serializers.CharField(source='bed.equipment_list', read_only=True)
     attending_doctor_name = serializers.CharField(source='attending_doctor.get_full_name', read_only=True)
     attending_doctor_display_id = serializers.CharField(source='attending_doctor.get_display_id', read_only=True)
-    allocated_by_name = serializers.CharField(source='allocated_by.get_full_name', read_only=True)
-    allocated_by_display_id = serializers.CharField(source='allocated_by.get_display_id', read_only=True)
+    allocated_by_name = serializers.SerializerMethodField()
+    allocated_by_display_id = serializers.SerializerMethodField()
     duration_days = serializers.ReadOnlyField()
     is_overdue = serializers.SerializerMethodField()
     
@@ -116,6 +123,12 @@ class BedAllocationSerializer(serializers.ModelSerializer):
         if not obj.expected_discharge_date or obj.actual_discharge_date or not obj.is_active:
             return False
         return timezone.now().date() > obj.expected_discharge_date
+    
+    def get_allocated_by_name(self, obj):
+        return obj.allocated_by.get_full_name() if obj.allocated_by else None
+
+    def get_allocated_by_display_id(self, obj):
+        return obj.allocated_by.get_display_id() if obj.allocated_by else None
     
     def validate(self, data):
         """Cross-field validation"""
@@ -162,10 +175,10 @@ class BedAllocationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['allocated_by'] = self.context['request'].user
         
-        # Mark bed as occupied
-        bed = validated_data['bed']
-        bed.status = 'occupied'
-        bed.save()
+        # # Mark bed as occupied
+        # bed = validated_data['bed']
+        # bed.status = 'occupied'
+        # bed.save()
         
         return super().create(validated_data)
     

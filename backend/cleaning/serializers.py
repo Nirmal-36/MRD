@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import CleaningRecord, CleaningStaff
-
+from django.db import transaction
 
 class CleaningStaffSerializer(serializers.ModelSerializer):
     """Serializer for managing cleaning staff information"""
@@ -23,8 +23,8 @@ class CleaningStaffSerializer(serializers.ModelSerializer):
 
 class CleaningRecordSerializer(serializers.ModelSerializer):
     """Main serializer for cleaning records with all details"""
-    recorded_by_name = serializers.CharField(source='recorded_by.get_full_name', read_only=True)
-    recorded_by_display_id = serializers.CharField(source='recorded_by.get_display_id', read_only=True)
+    recorded_by_name = serializers.SerializerMethodField()
+    recorded_by_display_id = serializers.SerializerMethodField()
     duration_minutes = serializers.ReadOnlyField()
     duration_display = serializers.ReadOnlyField()
     quality_rating_display = serializers.SerializerMethodField()
@@ -49,6 +49,12 @@ class CleaningRecordSerializer(serializers.ModelSerializer):
             stars = '⭐' * obj.quality_rating
             return f"{obj.quality_rating}/5 {stars}"
         return None
+
+    def get_recorded_by_name(self, obj):
+        return obj.recorded_by.get_full_name() if obj.recorded_by else None
+    
+    def get_recorded_by_display_id(self, obj):
+        return obj.recorded_by.get_display_id() if obj.recorded_by else None
     
     def validate(self, data):
         """Cross-field validation"""
@@ -72,10 +78,27 @@ class CleaningRecordSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Set the user who recorded this cleaning"""
-        validated_data['recorded_by'] = self.context['request'].user
-        return super().create(validated_data)
-    
+        with transaction.atomic():
+            validated_data['recorded_by'] = self.context['request'].user
+
+            cleaner_name = validated_data.get('cleaner_name')
+            cleaner_contact = validated_data.get('cleaner_contact', '')
+
+            if cleaner_name:
+                staff, created = CleaningStaff.objects.get_or_create(
+                    name=cleaner_name,
+                    defaults={
+                        'contact_number': cleaner_contact,
+                        'is_active': True,
+                        'notes': 'Auto-added from cleaning record'
+                    }
+                )
+                if not created and cleaner_contact and not staff.contact_number:
+                    staff.contact_number = cleaner_contact
+                    staff.save(update_fields=['contact_number'])
+
+            return super().create(validated_data)
+        
     def update(self, instance, validated_data):
         """Update cleaning record - don't change recorded_by"""
         # Remove recorded_by from validated_data if present to prevent changes
