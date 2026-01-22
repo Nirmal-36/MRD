@@ -30,9 +30,7 @@ class BedSerializer(serializers.ModelSerializer):
     
     def get_current_patient(self, obj):
         """Get information about current patient"""
-        active_allocation = obj.allocations.filter(is_active=True).select_related(
-            'attending_doctor'
-        ).first()
+        active_allocation = obj.allocations.select_related('attending_doctor').filter(is_active=True).first()
 
         if not active_allocation:
             return None
@@ -128,7 +126,10 @@ class BedAllocationSerializer(serializers.ModelSerializer):
         return obj.allocated_by.get_full_name() if obj.allocated_by else None
 
     def get_allocated_by_display_id(self, obj):
-        return obj.allocated_by.get_display_id() if obj.allocated_by else None
+        if obj.allocated_by and hasattr(obj.allocated_by, "get_display_id"):
+            return obj.allocated_by.get_display_id()
+        return None
+
     
     def validate(self, data):
         """Cross-field validation"""
@@ -159,13 +160,14 @@ class BedAllocationSerializer(serializers.ModelSerializer):
         
         # Validate dates
         if admission_date and expected_discharge_date:
-            if expected_discharge_date < admission_date.date():
+            admission = admission_date.date() if hasattr(admission_date, "date") else admission_date
+            if expected_discharge_date < admission:
                 raise serializers.ValidationError({
                     'expected_discharge_date': 'Expected discharge date cannot be before admission date.'
                 })
         
         # Validate attending doctor
-        if attending_doctor and attending_doctor.user_type != 'doctor':
+        if attending_doctor and getattr(attending_doctor, "user_type", None) != 'doctor':
             raise serializers.ValidationError({
                 'attending_doctor': 'Only users with doctor role can be assigned as attending doctor.'
             })
@@ -175,10 +177,9 @@ class BedAllocationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['allocated_by'] = self.context['request'].user
         
-        # # Mark bed as occupied
-        # bed = validated_data['bed']
-        # bed.status = 'occupied'
-        # bed.save()
+        bed = validated_data['bed']
+        bed.status = 'occupied'
+        bed.save(update_fields=['status'])
         
         return super().create(validated_data)
     
@@ -235,13 +236,15 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
         
         # Validate dates
         if admission_date and expected_discharge_date:
-            if expected_discharge_date < admission_date.date():
+            admission = admission_date.date() if hasattr(admission_date, "date") else admission_date
+            if expected_discharge_date < admission:
                 raise serializers.ValidationError({
                     'expected_discharge_date': 'Expected discharge date cannot be before admission date.'
                 })
+
         
         # Validate doctor
-        if attending_doctor and attending_doctor.user_type != 'doctor':
+        if attending_doctor and getattr(attending_doctor, "user_type", None) != 'doctor':
             raise serializers.ValidationError({
                 'attending_doctor': 'Only doctors can be assigned as attending doctor.'
             })

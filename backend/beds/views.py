@@ -16,7 +16,7 @@ from users.permissions import IsMedicalStaff, IsPatientReadOnly
 
 class BedViewSet(viewsets.ModelViewSet):
     """ViewSet for managing beds"""
-    queryset = Bed.objects.all()
+    queryset = queryset = Bed.objects.annotate(_alloc_count=Count('allocations'))
     serializer_class = BedSerializer
     permission_classes = [IsAuthenticated, IsPatientReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]

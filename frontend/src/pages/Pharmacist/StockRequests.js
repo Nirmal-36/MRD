@@ -66,6 +66,8 @@ const StockRequests = () => {
     }
   };
 
+  // console.log('Requests:', requests);
+
   useEffect(() => {
     fetchRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps

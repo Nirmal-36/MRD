@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.utils import timezone
 from datetime import timedelta
 from .models import Medicine, MedicineTransaction, StockRequest
+from django.db import transaction as db_transaction
+
 
 
 class PatientMedicineSerializer(serializers.ModelSerializer):
@@ -176,78 +178,96 @@ class MedicineTransactionSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        validated_data['performed_by'] = self.context['request'].user
-        transaction = super().create(validated_data)
-        
-        # Update medicine stock based on transaction type
-        medicine = transaction.medicine
-        if transaction.transaction_type == 'received':
-            medicine.current_stock += transaction.quantity
-        elif transaction.transaction_type == 'issued':
-            medicine.current_stock = max(0, medicine.current_stock - transaction.quantity)
-        elif transaction.transaction_type in ['expired', 'adjustment']:
-            medicine.current_stock = max(0, medicine.current_stock - transaction.quantity)
-        
-        # Save with skip_stock_validation flag to bypass direct stock change validation
-        medicine.save(skip_stock_validation=True)
-        return transaction
+
+        with db_transaction.atomic():
+            validated_data['performed_by'] = self.context['request'].user
+            transaction_obj = super().create(validated_data)
+
+            medicine = transaction_obj.medicine
+
+            if transaction_obj.transaction_type == 'received':
+                medicine.current_stock += transaction_obj.quantity
+            elif transaction_obj.transaction_type in ['issued', 'expired', 'adjustment']:
+                medicine.current_stock = max(0, medicine.current_stock - transaction_obj.quantity)
+
+            medicine.save(skip_stock_validation=True)
+
+            return transaction_obj
 
 
 class StockRequestSerializer(serializers.ModelSerializer):
     medicine_name = serializers.CharField(source='medicine.name', read_only=True)
     medicine_category = serializers.CharField(source='medicine.category', read_only=True)
-    medicine_current_stock = serializers.CharField(source='medicine.current_stock', read_only=True)
-    medicine_minimum_stock = serializers.CharField(source='medicine.minimum_stock_level', read_only=True)
-    requested_by_name = serializers.CharField(source='requested_by.get_full_name', read_only=True)
-    requested_by_display_id = serializers.CharField(source='requested_by.get_display_id', read_only=True)
-    days_pending = serializers.SerializerMethodField()
-    estimated_cost = serializers.SerializerMethodField()
+
+    # 🔧 ALWAYS RETURN THESE (frontend expects them)
+    current_stock = serializers.IntegerField(source='medicine.current_stock', read_only=True)
+
+    requested_by_name = serializers.SerializerMethodField()
+    requested_by_display_id = serializers.SerializerMethodField()
+
     approved_by_name = serializers.SerializerMethodField()
     approved_by_display_id = serializers.SerializerMethodField()
+
+    days_pending = serializers.SerializerMethodField()
+    estimated_cost = serializers.SerializerMethodField()
 
 
     
     class Meta:
         model = StockRequest
         fields = [
-            'id', 'medicine', 'medicine_name', 'medicine_category',
-            'medicine_current_stock', 'medicine_minimum_stock',
-            'requested_quantity', 'current_stock', 'priority', 'reason',
-            'estimated_usage_days', 'status', 'requested_by', 'requested_by_name',
-            'requested_by_display_id', 'approved_by', 'approved_by_name',
-            'approved_by_display_id', 'requested_date', 'approved_date',
-            'expected_delivery_date', 'notes', 'days_pending', 'estimated_cost'
+            'id',
+            'medicine',
+            'medicine_name',
+            'medicine_category',
+            'requested_quantity',
+            'current_stock',
+            'priority',
+            'reason',
+            'estimated_usage_days',
+            'status',
+            'requested_by',
+            'requested_by_name',
+            'requested_by_display_id',
+            'approved_by',
+            'approved_by_name',
+            'approved_by_display_id',
+            'requested_date',
+            'approved_date',
+            'expected_delivery_date',
+            'notes',
+            'days_pending',
+            'estimated_cost',
         ]
         read_only_fields = [
-            'requested_by', 'requested_date', 'approved_by', 'approved_date',
-            'current_stock', 'days_pending', 'estimated_cost'
+            'requested_by',
+            'requested_date',
+            'approved_by',
+            'approved_date',
+            'current_stock',
+            'days_pending',
+            'estimated_cost',
         ]
-    
+
+    def get_requested_by_name(self, obj):
+        return obj.requested_by.get_full_name() if obj.requested_by else None
+
+    def get_requested_by_display_id(self, obj):
+        return obj.requested_by.get_display_id() if obj.requested_by else None
+
+    def get_approved_by_name(self, obj):
+        return obj.approved_by.get_full_name() if obj.approved_by else None
+
+    def get_approved_by_display_id(self, obj):
+        return obj.approved_by.get_display_id() if obj.approved_by else None
+
     def get_days_pending(self, obj):
-        """Calculate days since request was made"""
         if obj.status != 'pending':
             return None
         return (timezone.now().date() - obj.requested_date.date()).days
-    
+
     def get_estimated_cost(self, obj):
-        """Calculate estimated cost of the request"""
         return float(obj.requested_quantity * obj.medicine.unit_price)
-    
-    def get_approved_by_name(self, obj):
-        if obj.approved_by:
-            return obj.approved_by.get_full_name()
-        return None
-
-    def get_approved_by_display_id(self, obj):
-        if obj.approved_by:
-            return obj.approved_by.get_display_id()
-        return None
-
-    def validate_requested_quantity(self, value):
-        """Validate requested quantity is positive"""
-        if value <= 0:
-            raise serializers.ValidationError("Requested quantity must be greater than 0.")
-        return value
     
     def validate_estimated_usage_days(self, value):
         """Validate estimated usage days if provided"""
@@ -262,11 +282,12 @@ class StockRequestSerializer(serializers.ModelSerializer):
         priority = data.get('priority', 'medium')
 
         # Auto-set priority based on stock level if not explicitly set
-        if medicine and (not isinstance(self.initial_data, dict) or 'priority' not in self.initial_data):
+        if medicine and 'priority' not in self.initial_data:
             if medicine.current_stock == 0:
-                data['priority'] = 'urgent'
+                data = {**data, 'priority': 'urgent'}
             elif medicine.is_low_stock:
-                data['priority'] = 'high'
+                data = {**data, 'priority': 'high'}
+
 
         # Suggest reasonable quantities based on minimum stock level
         if medicine and requested_quantity > (medicine.minimum_stock_level * 10):

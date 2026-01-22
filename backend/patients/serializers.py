@@ -12,7 +12,12 @@ class PatientSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Patient
-        fields = '__all__'
+        fields = [
+            'id', 'employee_student_id', 'name', 'age', 'gender',
+            'patient_type', 'phone', 'blood_group', 'allergies',
+            'chronic_conditions', 'created_at', 'updated_at',
+            'treatments_count', 'last_visit', 'user_status', 'email',
+        ]
         read_only_fields = ['created_by', 'created_at', 'updated_at', 'user']
     
     def get_phone(self, obj):
@@ -28,14 +33,17 @@ class PatientSerializer(serializers.ModelSerializer):
         return None
     
     def get_treatments_count(self, obj):
-        return obj.treatments.count()
+        if hasattr(obj, 'treatments'):
+            return obj.treatments.count()
+        return 0
     
     def get_last_visit(self, obj):
-        last_treatment = obj.treatments.first()
-        if last_treatment:
-            return last_treatment.visit_date
+        if hasattr(obj, 'treatments'):
+            last_treatment = obj.treatments.order_by('-visit_date').first()
+            if last_treatment:
+                return last_treatment.visit_date
         return None
-    
+
     def get_user_status(self, obj):
         """Check if patient is linked to a registered user"""
         if obj.user:
@@ -55,12 +63,22 @@ class PatientSerializer(serializers.ModelSerializer):
 class TreatmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
-    doctor_available = serializers.BooleanField(source='doctor.is_available', read_only=True)
+    doctor_available = serializers.SerializerMethodField()
     
     class Meta:
         model = Treatment
-        fields = '__all__'
+        fields = [
+            'id', 'patient', 'patient_name', 'doctor', 'doctor_name',
+            'doctor_available', 'visit_date', 'symptoms', 'diagnosis',
+            'treatment_given', 'severity', 'follow_up_date', 'notes',
+            'created_at', 'updated_at',
+        ]
         read_only_fields = ['created_at', 'updated_at']
+
+        def get_doctor_available(self, obj):
+            if obj.doctor:
+                return obj.doctor.is_available
+            return False
 
 
 class PatientDetailSerializer(PatientSerializer):
@@ -103,7 +121,7 @@ class TreatmentWithMedicinesSerializer(serializers.ModelSerializer):
     """Extended treatment serializer with prescribed medicines"""
     patient_name = serializers.CharField(source='patient.name', read_only=True)
     doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
-    doctor_available = serializers.BooleanField(source='doctor.is_available', read_only=True)
+    doctor_available = serializers.SerializerMethodField()
     prescribed_medicines = TreatmentMedicineSerializer(many=True, read_only=True)
     
     class Meta:
@@ -116,3 +134,8 @@ class TreatmentWithMedicinesSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['doctor', 'created_at', 'updated_at']
+
+        def get_doctor_available(self, obj):
+            if obj.doctor:
+                return obj.doctor.is_available
+            return False

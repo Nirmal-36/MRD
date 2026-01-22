@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import IntegrityError
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import User, ProfileChangeRequest
@@ -7,7 +8,9 @@ from .validators import (
     validate_indian_phone, validate_klh_email, validate_otp_format,
     validate_username_unique
 )
-from .security_utils import increment_login_attempts
+from .security_utils import (
+    check_account_lockout, increment_login_attempts, reset_login_attempts,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,12 +33,9 @@ class UserSerializer(serializers.ModelSerializer):
     def get_display_id(self, obj):
         """Return the appropriate ID based on user type"""
         if obj.user_type == 'student':
-            return obj.student_id
-        else:
-            return obj.employee_id
+            return obj.student_id or None
+        return obj.employee_id or None
     
-
-
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(required=False, allow_blank=True)
@@ -87,27 +87,46 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
-    
+
     def validate(self, data):
         username = data.get('username')
         password = data.get('password')
-        
-        if username and password:
-            user = authenticate(username=username, password=password)
-            if user:
-                if not user.is_active:
-                    # Check if user has is_approved attribute (for custom User model)
-                    if hasattr(user, 'is_approved') and not user.is_approved:  # type: ignore[attr-defined]
-                        raise serializers.ValidationError('Your account is pending admin approval. Please wait for approval to access the system.')
-                    raise serializers.ValidationError('User account is disabled.')
-                data['user'] = user
-                return data
-            else:
-                # Increment failed login attempts
-                increment_login_attempts(username)
-                raise serializers.ValidationError('Invalid username or password.')
-        else:
-            raise serializers.ValidationError('Must include username and password.')
+
+        # 1️⃣ Basic validation
+        if not username or not password:
+            raise serializers.ValidationError(
+                'Must include username and password.'
+            )
+
+        # 2️⃣ Check if account is locked due to failed attempts
+        is_locked, attempts_left, lockout_remaining = check_account_lockout(username)
+        if is_locked:
+            raise serializers.ValidationError(
+                f'Too many failed login attempts. Try again in {lockout_remaining} seconds.'
+            )
+
+        # 3️⃣ Authenticate user (ONLY ONCE)
+        user = authenticate(username=username, password=password)
+
+        if user:
+            # 4️⃣ Successful login → reset failed attempts
+            reset_login_attempts(username)
+
+            # 5️⃣ Check activation / approval status
+            if not user.is_active:
+                if hasattr(user, 'is_approved') and not user.is_approved:
+                    raise serializers.ValidationError(
+                        'Your account is pending admin approval. Please wait.'
+                    )
+                raise serializers.ValidationError('User account is disabled.')
+
+            # 6️⃣ Login success
+            data['user'] = user
+            return data
+
+        # 7️⃣ Authentication failed → increment attempts
+        increment_login_attempts(username)
+        raise serializers.ValidationError('Invalid username or password.')
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -199,6 +218,9 @@ class ResetPasswordSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError({'email': 'No account found with this email address.'})
         
+        if not verify_otp(email, data['otp']):
+            raise serializers.ValidationError({'otp': 'Invalid or expired OTP'})
+
         data['user'] = user
         return data
 
@@ -310,11 +332,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             validated_data['is_approved'] = False
             validated_data['is_active'] = False  # Inactive until approved
         elif user_type == 'admin':
-            # Admins are auto-approved (should be created via Django admin)
-            validated_data['is_approved'] = True
-            
-        user = User.objects.create_user(password=password, **validated_data)
-        return user
+            raise serializers.ValidationError(
+                'Admin accounts must be created by system administrators.'
+            )
+        
+        try:
+            user = User.objects.create_user(password=password, **validated_data)
+            return user
+        except IntegrityError:
+            raise serializers.ValidationError({
+                'phone': 'This phone number is already registered.'
+        })
+
 
 
 class PatientRegistrationSerializer(serializers.ModelSerializer):
