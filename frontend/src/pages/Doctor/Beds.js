@@ -160,6 +160,8 @@ const Beds = () => {
     } catch (err) {
       console.error('Error allocating bed:', err);
       console.error('Error response:', err.response?.data);
+      alert(JSON.stringify(error.response?.data, null, 2));
+
       
       // Extract error message from various possible response formats
       let errorMessage = 'Failed to allocate bed';
@@ -338,7 +340,8 @@ const Beds = () => {
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Status</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Equipment</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Patient</TableCell>
-              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Description</TableCell>
+              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Condition</TableCell>
+              <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Special Requirements</TableCell>
               <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'bold' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -389,7 +392,12 @@ const Beds = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="textSecondary">
-                      {bed.description || 'No description'}
+                      {bed.current_patient?.condition || 'No description'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" color="textSecondary">
+                      {bed.current_patient?.special_requirements || 'No description'}
                     </Typography>
                   </TableCell>
                   <TableCell>

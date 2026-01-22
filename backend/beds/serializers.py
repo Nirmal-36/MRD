@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Bed, BedAllocation
-
+from django.db import transaction
 
 class BedSerializer(serializers.ModelSerializer):
     is_available = serializers.ReadOnlyField()
@@ -44,6 +44,7 @@ class BedSerializer(serializers.ModelSerializer):
             'attending_doctor': doctor.get_full_name() if doctor else None,
             'attending_doctor_id': doctor.get_display_id() if doctor else None,
             'condition': active_allocation.condition,
+            'special_requirements': active_allocation.special_requirements,
             'days_admitted': active_allocation.duration_days,
         }
 
@@ -175,13 +176,14 @@ class BedAllocationSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        validated_data['allocated_by'] = self.context['request'].user
+        with transaction.atomic():
+            validated_data['allocated_by'] = self.context['request'].user
         
-        bed = validated_data['bed']
-        bed.status = 'occupied'
-        bed.save(update_fields=['status'])
-        
-        return super().create(validated_data)
+            bed = validated_data['bed']
+            bed.status = 'occupied'
+            bed.save(update_fields=['status'])
+            
+            return super().create(validated_data)
     
     def update(self, instance, validated_data):
         # If marking as inactive (discharged), make bed available
@@ -203,8 +205,8 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
         model = BedAllocation
         fields = [
             'bed', 'patient_name', 'patient_id', 'admission_date',
-            'expected_discharge_date', 'condition', 'special_requirements',
-            'attending_doctor'
+            'expected_discharge_date', 'condition', 'special_requirements'
+            # attending_doctor removed from input
         ]
     
     def validate(self, data):
@@ -212,7 +214,6 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
         bed = data.get('bed')
         admission_date = data.get('admission_date')
         expected_discharge_date = data.get('expected_discharge_date')
-        attending_doctor = data.get('attending_doctor')
         patient_id = data.get('patient_id')
         
         # Check bed availability
@@ -230,8 +231,11 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
             
             if existing_allocation:
                 raise serializers.ValidationError({
-                    'patient_id': f'Patient {patient_id} is already allocated to Bed {existing_allocation.bed.bed_number}. '
-                                  f'Please discharge from the current bed before allocating a new one.'
+                    'patient_id': (
+                        f'Patient {patient_id} is already allocated to '
+                        f'Bed {existing_allocation.bed.bed_number}. '
+                        f'Please discharge from the current bed before allocating a new one.'
+                    )
                 })
         
         # Validate dates
@@ -241,19 +245,24 @@ class BedAllocationCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'expected_discharge_date': 'Expected discharge date cannot be before admission date.'
                 })
-
-        
-        # Validate doctor
-        if attending_doctor and getattr(attending_doctor, "user_type", None) != 'doctor':
-            raise serializers.ValidationError({
-                'attending_doctor': 'Only doctors can be assigned as attending doctor.'
-            })
         
         return data
     
     def create(self, validated_data):
         """Create bed allocation with allocated_by from request user"""
-        validated_data['allocated_by'] = self.context['request'].user
+
+        user = self.context['request'].user
+
+        # Ensure only doctors can allocate beds
+        if getattr(user, 'user_type', None) != 'doctor':
+            raise serializers.ValidationError(
+                'Only doctors can allocate beds.'
+            )
+
+        # Auto-assign attending doctor as logged-in doctor
+        validated_data['attending_doctor'] = user
+
+        validated_data['allocated_by'] = user
         
         # Try to link to patient record if patient_id is provided
         patient_id = validated_data.get('patient_id')
