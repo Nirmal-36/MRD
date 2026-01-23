@@ -215,7 +215,7 @@ const LowStock = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>{medicine.minimum_stock_level}</TableCell>
-                  <TableCell>${medicine.unit_price}</TableCell>
+                  <TableCell>₹{medicine.unit_price}</TableCell>
                   <TableCell>
                     <Chip
                       label={getStockStatusLabel(medicine)}

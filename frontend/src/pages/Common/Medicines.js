@@ -266,7 +266,7 @@ const Medicines = () => {
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>${medicine.unit_price}</TableCell>
+                    <TableCell>₹{medicine.unit_price}</TableCell>
                     <TableCell>
                       {medicine.expiry_date || 'N/A'}
                     </TableCell>

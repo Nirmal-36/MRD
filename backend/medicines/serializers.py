@@ -211,8 +211,6 @@ class StockRequestSerializer(serializers.ModelSerializer):
     days_pending = serializers.SerializerMethodField()
     estimated_cost = serializers.SerializerMethodField()
 
-
-    
     class Meta:
         model = StockRequest
         fields = [
@@ -262,12 +260,15 @@ class StockRequestSerializer(serializers.ModelSerializer):
         return obj.approved_by.get_display_id() if obj.approved_by else None
 
     def get_days_pending(self, obj):
-        if obj.status != 'pending':
+        if obj.status != 'pending' or not obj.requested_date:
             return None
         return (timezone.now().date() - obj.requested_date.date()).days
 
     def get_estimated_cost(self, obj):
+        if not obj.medicine or obj.medicine.unit_price is None:
+            return 0.0
         return float(obj.requested_quantity * obj.medicine.unit_price)
+
     
     def validate_estimated_usage_days(self, value):
         """Validate estimated usage days if provided"""
@@ -295,11 +296,6 @@ class StockRequestSerializer(serializers.ModelSerializer):
             pass
 
         return data
-    
-    def create(self, validated_data):
-        validated_data['requested_by'] = self.context['request'].user
-        validated_data['current_stock'] = validated_data['medicine'].current_stock
-        return super().create(validated_data)
 
 
 class StockRequestApprovalSerializer(serializers.ModelSerializer):

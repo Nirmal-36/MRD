@@ -422,8 +422,8 @@ class MedicineTransactionViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['transaction_type', 'medicine', 'performed_by']
     search_fields = ['medicine__name', 'supplier', 'patient', 'remarks']
-    ordering_fields = ['date']
-    ordering = ['-date']
+    ordering_fields = ['requested_date', 'approved_date', 'id']
+    ordering = ['-id']
     
     def get_queryset(self):
         """Restrict access to medicine transactions. HODs can only see transactions related to their department's patients."""
@@ -447,7 +447,7 @@ class MedicineTransactionViewSet(viewsets.ModelViewSet):
 
 
 class StockRequestViewSet(viewsets.ModelViewSet):
-    queryset = StockRequest.objects.all()
+    queryset = StockRequest.objects.select_related('medicine', 'requested_by', 'approved_by')
     serializer_class = StockRequestSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -464,9 +464,25 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Custom queryset with additional filtering"""
-        queryset = super().get_queryset()
-        
-        # Filter by age of request
+        queryset = StockRequest.objects.select_related(
+            'medicine',
+            'requested_by',
+            'approved_by'
+        )
+
+        user = self.request.user
+
+        # ROLE-BASED VISIBILITY
+        if user.user_type == 'hod':
+            queryset = queryset.filter(
+                requested_by__department=user.department
+            )
+        elif user.user_type == 'pharmacist':
+            pass  # pharmacists see all
+        elif user.user_type not in ['admin', 'principal']:
+            queryset = queryset.filter(requested_by=user)
+
+        # Filter by status / priority etc (DjangoFilterBackend still works)
         days_old = self.request.query_params.get('days_old')
         if days_old:
             try:
@@ -474,12 +490,12 @@ class StockRequestViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(requested_date__lte=days_ago)
             except ValueError:
                 pass
-        
-        # Filter requests for current user
+
         if self.request.query_params.get('my_requests') == 'true':
-            queryset = queryset.filter(requested_by=self.request.user)
-        
+            queryset = queryset.filter(requested_by=user)
+
         return queryset
+
     
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -575,6 +591,6 @@ class StockRequestViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def pending(self, request):
         """Get all pending stock requests"""
-        requests = StockRequest.objects.filter(status='pending')
+        requests = self.get_queryset().filter(status='pending')
         serializer = self.get_serializer(requests, many=True)
         return Response(serializer.data)
