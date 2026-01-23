@@ -24,7 +24,7 @@ const HODLayout = () => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/hod' },
     { text: 'Student Health Reports', icon: <SchoolIcon />, path: '/hod/student-health' },
-    { text: 'High-Risk Students', icon: <HospitalIcon />, path: '/hod/high-risk' },
+    { text: 'High-Risk Patients', icon: <HospitalIcon />, path: '/hod/high-risk' },
     { text: 'Utilization Analytics', icon: <ReportsIcon />, path: '/hod/utilization' },
     { text: 'Inventory Management', icon: <HospitalIcon />, path: '/hod/inventory' },
     { text: 'Bed Capacity', icon: <PeopleIcon />, path: '/hod/beds' },

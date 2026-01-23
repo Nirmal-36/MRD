@@ -25,7 +25,7 @@ const PrincipalLayout = () => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/principal' },
     { text: 'Student Health Reports', icon: <SchoolIcon />, path: '/principal/student-health' },
-    { text: 'High-Risk Students', icon: <HospitalIcon />, path: '/principal/high-risk' },
+    { text: 'High-Risk Patients', icon: <HospitalIcon />, path: '/principal/high-risk' },
     { text: 'Utilization Analytics', icon: <ReportsIcon />, path: '/principal/utilization' },
     { text: 'Inventory Management', icon: <InventoryIcon />, path: '/principal/inventory' },
     { text: 'Bed Capacity', icon: <BedIcon />, path: '/principal/beds' },
