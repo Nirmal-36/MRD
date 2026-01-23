@@ -36,6 +36,7 @@ const UtilizationAnalytics = ({ department = null }) => {
             const params = { start_date: startDate, end_date: endDate };
             if (department) params.department = department;
             const response = await apiService.getUtilizationRate(params);
+            // console.log('Utilization Rate Response:', response);
             setUtilizationData(response.data);
             setError('');
         } catch (err) {

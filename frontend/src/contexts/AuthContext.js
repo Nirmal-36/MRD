@@ -74,7 +74,10 @@ export const AuthProvider = ({ children }) => {
       }
       return {
         success: false,
-        error: error.response?.data?.error || 'Login failed. Please check your credentials.',
+        error:
+        error.response?.data?.detail ||
+        error.response?.data?.non_field_errors?.[0] ||
+        'Login failed. Please check your credentials.',
       };
     }
   };

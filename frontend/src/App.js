@@ -47,7 +47,7 @@ import BedCapacity from "./pages/Principal/BedCapacity";
 
 import HODDashboard from "./pages/HOD/HODDashboard";
 import HODStudentHealthReports from "./pages/HOD/StudentHealthReports";
-import HODHighRiskStudents from "./pages/HOD/HighRiskStudents";
+import HODHighRiskStudents from "./pages/HOD/HighRiskPatients";
 import HODUtilizationAnalytics from "./pages/HOD/UtilizationAnalytics";
 import HODInventoryManagement from "./pages/HOD/InventoryManagement";
 import HODBedCapacity from "./pages/HOD/BedCapacity";

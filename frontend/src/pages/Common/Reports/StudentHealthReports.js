@@ -35,6 +35,7 @@ const StudentHealthReports = ({ department = null }) => {
             const params = { start_date: startDate, end_date: endDate };
             if (department) params.department = department;
             const response = await apiService.getStudentHealthReport(params);
+            // console.log('Student Health Report Response:', response);
             setStudentHealth(response.data);
             setError('');
         } catch (err) {

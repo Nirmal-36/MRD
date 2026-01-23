@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Count, Q, F, Sum
 from django.utils import timezone
-from datetime import timedelta, date
+from datetime import timedelta, datetime, date
 from dateutil.relativedelta import relativedelta
 from users.models import User
 from patients.models import Patient, Treatment
@@ -26,13 +26,14 @@ def student_health_report(request):
         months = int(request.query_params.get('months', 6))
         
         if start_date_param and end_date_param:
-            from datetime import datetime
-            start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
-            start_date = timezone.make_aware(start_date)
-            end_date = timezone.make_aware(end_date)
+            start_date = timezone.make_aware(
+                datetime.strptime(start_date_param, '%Y-%m-%d')
+            )
+            end_date = timezone.make_aware(
+                datetime.strptime(end_date_param, '%Y-%m-%d')
+            ) + timedelta(days=1)
         else:
-            start_date = timezone.now() - timedelta(days=months*30)
+            start_date = timezone.now() - timedelta(days=months * 30)
             end_date = timezone.now()
         
         # Get department filter (for HOD - auto-detect if HOD and no department specified)
@@ -76,7 +77,7 @@ def student_health_report(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def high_risk_students(request):
+def high_risk_patients(request):
     """Students with allergies/chronic conditions"""
     user = request.user
     if user.user_type not in ['principal', 'admin', 'hod']:
@@ -84,43 +85,43 @@ def high_risk_students(request):
     
     try:
         # Get department filter (for HOD - auto-detect if HOD and no department specified)
-        department = request.query_params.get('department', None)
+        department = request.query_params.get('department')
         if not department and user.user_type == 'hod':
             department = user.department
         
         # Students with allergies or chronic conditions
-        high_risk = Patient.objects.filter(
-            user__user_type='student'
-        )
+        students = Patient.objects.filter(user__user_type='student')
+
         if department:
-            high_risk = high_risk.filter(user__department=department)
-        
-        high_risk = high_risk.exclude(
-            Q(allergies__isnull=True) | Q(allergies='')
-        ).exclude(
-            Q(chronic_conditions__isnull=True) | Q(chronic_conditions='')
+            students = students.filter(user__department=department)
+
+        # Correct HIGH-RISK logic (OR)
+        high_risk = students.filter(
+            Q(allergies__isnull=False, allergies__gt='') |
+            Q(chronic_conditions__isnull=False, chronic_conditions__gt='')
         ).select_related('user').values(
-            'id', 'name', 'employee_student_id', 
+            'id', 'name', 'employee_student_id',
             'allergies', 'chronic_conditions',
             'user__department', 'user__phone', 'user__email',
             'blood_group', 'age'
         )
-        
-        # Count by type
-        with_allergies = Patient.objects.filter(
-            user__user_type='student'
-        ).exclude(Q(allergies__isnull=True) | Q(allergies='')).count()
-        
-        with_chronic = Patient.objects.filter(
-            user__user_type='student'
-        ).exclude(Q(chronic_conditions__isnull=True) | Q(chronic_conditions='')).count()
-        
+
+        # Department-aware counts
+        with_allergies = students.filter(
+            Q(allergies__isnull=False, allergies__gt='')
+        ).count()
+
+        with_chronic = students.filter(
+            Q(chronic_conditions__isnull=False, chronic_conditions__gt='')
+        ).count()
+
         return Response({
             'high_risk_students': list(high_risk),
             'total_count': high_risk.count(),
             'students_with_allergies': with_allergies,
             'students_with_chronic_conditions': with_chronic
         })
+
     except Exception as e:
         return Response({
             'error': 'Failed to generate high-risk students report',
@@ -143,86 +144,82 @@ def utilization_rate(request):
         months = int(request.query_params.get('months', 6))
         
         if start_date_param and end_date_param:
-            from datetime import datetime
-            start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
-            start_date = timezone.make_aware(start_date)
-            end_date = timezone.make_aware(end_date)
+            start_date = timezone.make_aware(
+                datetime.strptime(start_date_param, '%Y-%m-%d')
+            )
+            end_date = timezone.make_aware(
+                datetime.strptime(end_date_param, '%Y-%m-%d')
+            ) + timedelta(days=1)
         else:
-            start_date = timezone.now() - timedelta(days=months*30)
             end_date = timezone.now()
+            start_date = end_date - timedelta(days=months * 30)
         
         # Get department filter (for HOD - auto-detect if HOD and no department specified)
-        department = request.query_params.get('department', None)
+        department = request.query_params.get('department')
         if not department and user.user_type == 'hod':
             department = user.department
-        
+
         # Base queryset
         student_query = Treatment.objects.filter(
             patient__user__user_type='student',
             visit_date__gte=start_date,
-            visit_date__lte=end_date
+            visit_date__lt=end_date
         )
+
         staff_query = Treatment.objects.filter(
             patient__user__user_type='employee',
             visit_date__gte=start_date,
-            visit_date__lte=end_date
+            visit_date__lt=end_date
         )
-        
+
         if department:
             student_query = student_query.filter(patient__user__department=department)
             staff_query = staff_query.filter(patient__user__department=department)
-        
-        # Overall stats
+
         student_visits = student_query.count()
         staff_visits = staff_query.count()
-        
-        # Calculate monthly breakdown using actual calendar months
+
+
+        # MONTHLY BREAKDOWN
         monthly_data = []
-        
-        # Normalize to start of month for start_date and end of month for end_date
-        current_month_start = start_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end_month_last_day = (end_date.replace(day=1) + relativedelta(months=1) - timedelta(days=1)).replace(
-            hour=23, minute=59, second=59, microsecond=999999
+
+        month_cursor = start_date.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
         )
-        
-        # Iterate through each calendar month
-        month_cursor = current_month_start
-        while month_cursor <= end_month_last_day:
-            # Get the start and end of current month
+
+        while month_cursor < end_date:
             month_start = month_cursor
-            month_end = (month_cursor + relativedelta(months=1)) - timedelta(microseconds=1)
-            
-            # Don't go beyond the end_date
-            if month_end > end_month_last_day:
-                month_end = end_month_last_day
-            
+            month_end = min(
+                month_cursor + relativedelta(months=1),
+                end_date
+            )
+
             student_monthly = Treatment.objects.filter(
                 patient__user__user_type='student',
                 visit_date__gte=month_start,
-                visit_date__lte=month_end
+                visit_date__lt=month_end
             )
+
             staff_monthly = Treatment.objects.filter(
                 patient__user__user_type='employee',
                 visit_date__gte=month_start,
-                visit_date__lte=month_end
+                visit_date__lt=month_end
             )
-            
+
             if department:
                 student_monthly = student_monthly.filter(patient__user__department=department)
                 staff_monthly = staff_monthly.filter(patient__user__department=department)
-            
-            student_count = student_monthly.count()
-            staff_count = staff_monthly.count()
-            
+
+            s_count = student_monthly.count()
+            e_count = staff_monthly.count()
+
             monthly_data.append({
                 'month': month_start.strftime('%B %Y'),
-                'student_visits': student_count,
-                'staff_visits': staff_count,
-                'total': student_count + staff_count
+                'student_visits': s_count,
+                'staff_visits': e_count,
+                'total': s_count + e_count,
             })
-            
-            # Move to next month
+
             month_cursor = month_cursor + relativedelta(months=1)
         
         return Response({
@@ -231,13 +228,17 @@ def utilization_rate(request):
             'staff_visits': staff_visits,
             'total_visits': student_visits + staff_visits,
             'start_date': start_date.date(),
-            'end_date': end_date.date()
+            'end_date': (end_date - timedelta(days=1)).date(),
         })
+
     except Exception as e:
-        return Response({
-            'error': 'Failed to generate utilization report',
-            'details': str(e)
-        }, status=500)
+        return Response(
+            {
+                'error': 'Failed to generate utilization report',
+                'details': str(e)
+            },
+            status=500
+        )
 
 
 @api_view(['GET'])
@@ -245,73 +246,86 @@ def utilization_rate(request):
 def critical_stock_status(request):
     """Medicines below minimum stock level and most used medicines"""
     user = request.user
+
     if user.user_type not in ['principal', 'admin', 'hod']:
-        return Response({'error': 'Access denied. Only principals and HODs can access this report.'}, status=403)
-    
+        return Response(
+            {'error': 'Access denied. Only principals and HODs can access this report.'},
+            status=403
+        )
+
     try:
-        # Get custom date range for most used medicines (default: last 6 months)
-        start_date_param = request.query_params.get('start_date', None)
-        end_date_param = request.query_params.get('end_date', None)
+        start_date_param = request.query_params.get('start_date')
+        end_date_param = request.query_params.get('end_date')
         months = int(request.query_params.get('months', 6))
-        
+
         if start_date_param and end_date_param:
-            from datetime import datetime
-            start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
-            start_date = timezone.make_aware(start_date)
-            end_date = timezone.make_aware(end_date)
+            from datetime import datetime, time
+            start_date = timezone.make_aware(
+                datetime.combine(
+                    datetime.strptime(start_date_param, '%Y-%m-%d').date(),
+                    time.min
+                )
+            )
+            end_date = timezone.make_aware(
+                datetime.combine(
+                    datetime.strptime(end_date_param, '%Y-%m-%d').date(),
+                    time.max
+                )
+            )
         else:
-            start_date = timezone.now() - timedelta(days=months*30)
+            start_date = timezone.now() - timedelta(days=months * 30)
             end_date = timezone.now()
-        
-        # Get department filter if provided
-        department = request.query_params.get('department', None)
-        
-        # Critical stock medicines
+
+        department = request.query_params.get('department')
+
+        # Critical stock (global)
         critical_stock = Medicine.objects.filter(
             current_stock__lte=F('minimum_stock_level'),
             is_active=True
         ).values(
-            'id', 'name', 'category', 'current_stock', 
-            'minimum_stock_level', 'unit_price'
+            'id', 'name', 'category',
+            'current_stock', 'minimum_stock_level', 'unit_price'
         ).order_by('current_stock')
-        
-        # Calculate estimated value
+
         total_value = 0
-        medicines_list = list(critical_stock)
-        for medicine in medicines_list:
-            value = medicine['current_stock'] * medicine['unit_price']
-            medicine['total_value'] = round(value, 2)
+        medicines_list = []
+        for m in critical_stock:
+            value = m['current_stock'] * m['unit_price']
+            m['total_value'] = round(value, 2)
             total_value += value
-        
-        # Top 10 most used medicines (by transaction quantity)
+            medicines_list.append(m)
+
+        # Most used medicines
         most_used_query = MedicineTransaction.objects.filter(
             transaction_type='issued',
             date__gte=start_date,
             date__lte=end_date
         )
-        
-        # Apply department filter if provided using patient_record FK
+
         if department:
-            most_used_query = most_used_query.filter(patient_record__user__department=department)
-        
+            most_used_query = most_used_query.filter(
+                patient_record__isnull=False,
+                patient_record__user__department=department
+            )
+
         most_used = most_used_query.values(
-            'medicine__name', 'medicine__category', 'medicine__id'
+            'medicine__id', 'medicine__name', 'medicine__category'
         ).annotate(
-            total_quantity=Sum('quantity'),
-            transaction_count=Count('id')
-        ).order_by('-total_quantity')[:10]
-        
-        most_used_list = []
-        for item in most_used:
-            most_used_list.append({
-                'medicine_id': item['medicine__id'],
-                'name': item['medicine__name'],
-                'category': item['medicine__category'],
-                'total_dispensed': item['total_quantity'],
-                'dispensing_count': item['transaction_count']
-            })
-        
+            total_dispensed=Sum('quantity'),
+            dispensing_count=Count('id')
+        ).order_by('-total_dispensed')[:10]
+
+        most_used_list = [
+            {
+                'medicine_id': m['medicine__id'],
+                'name': m['medicine__name'],
+                'category': m['medicine__category'],
+                'total_dispensed': m['total_dispensed'],
+                'dispensing_count': m['dispensing_count']
+            }
+            for m in most_used
+        ]
+
         return Response({
             'critical_medicines': medicines_list,
             'total_count': len(medicines_list),
@@ -320,11 +334,13 @@ def critical_stock_status(request):
             'start_date': start_date.date(),
             'end_date': end_date.date()
         })
+
     except Exception as e:
         return Response({
             'error': 'Failed to generate critical stock report',
             'details': str(e)
         }, status=500)
+
 
 
 @api_view(['GET'])

@@ -11,7 +11,7 @@ import {
     DataTable,
 } from "./DashboardElements";
 
-const HighRiskStudents = ({ department = null }) => {
+const HighRiskPatients = ({ department = null }) => {
     const theme = useTheme();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -25,27 +25,27 @@ const HighRiskStudents = ({ department = null }) => {
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
-        fetchHighRiskStudents();
+        fetchHighRiskPatients();
         // eslint-disable-next-line
     }, [department]);
 
-    const fetchHighRiskStudents = async () => {
+    const fetchHighRiskPatients = async () => {
         try {
             setLoading(true);
             const params = { start_date: startDate, end_date: endDate };
             if (department) params.department = department;
-            const response = await apiService.getHighRiskStudents(params);
+            const response = await apiService.getHighRiskPatients(params);
             setRiskData(response.data);
             setError('');
         } catch (err) {
-            console.error('Error fetching high-risk students:', err);
-            setError('Failed to load high-risk students data');
+            console.error('Error fetching high-risk patients:', err);
+            setError('Failed to load high-risk patients data');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRefresh = () => fetchHighRiskStudents();
+    const handleRefresh = () => fetchHighRiskPatients();
 
     if (loading) return <LoadingState />;
     if (error) return <ErrorState message={error} />;
@@ -166,4 +166,4 @@ const HighRiskStudents = ({ department = null }) => {
     );
 };
 
-export default HighRiskStudents;
+export default HighRiskPatients;

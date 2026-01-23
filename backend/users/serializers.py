@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import User, ProfileChangeRequest
+from patients.models import Patient
 from .otp_utils import verify_otp
 from .validators import (
     validate_indian_phone, validate_klh_email, validate_otp_format,
@@ -16,6 +17,8 @@ from .security_utils import (
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     display_id = serializers.SerializerMethodField()
+    has_medical_record = serializers.SerializerMethodField()
+    medical_record_id = serializers.SerializerMethodField()
     
     class Meta:
         model = User
@@ -23,7 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
             'user_type', 'phone', 'employee_id', 'student_id', 'display_id',
             'department', 'designation', 'year_of_study', 'course',
-            'is_available', 'is_active', 'is_approved', 'date_joined'
+            'is_available', 'is_active', 'is_approved', 'date_joined',
+            'has_medical_record', 'medical_record_id'
         ]
         read_only_fields = ['id', 'date_joined', 'full_name', 'display_id', 'is_approved']
     
@@ -36,6 +40,22 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.student_id or None
         return obj.employee_id or None
     
+    def get_has_medical_record(self, obj):
+        # Preferred: value from queryset annotation
+        if hasattr(obj, 'has_medical_record'):
+            return obj.has_medical_record
+
+        # Fallback (safe)
+        return Patient.objects.filter(user=obj).exists()
+
+
+    def get_medical_record_id(self, obj):
+        try:
+            return obj.medical_record.id
+        except Exception:
+            return None
+
+
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(required=False, allow_blank=True)

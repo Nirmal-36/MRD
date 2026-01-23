@@ -18,14 +18,15 @@ class Patient(models.Model):
     
     # Link to registered user (this establishes the relationship)
     # user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='patient_records',
-        db_constraint=False
+    user = models.OneToOneField(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name='medical_record',
+    db_constraint=False
     )
+
     
     # Basic Information - Employee ID/Student Roll No (combined field)
     employee_student_id = models.CharField(max_length=20, unique=True, verbose_name="Employee ID/Student Roll No")
@@ -111,13 +112,6 @@ class Patient(models.Model):
         # If user is already linked, sync phone from user
         if self.user and self.user.phone:
             self.phone = self.user.phone
-        
-        # Validate no duplicate patient records for the same user
-        if self.user:
-            existing_patient = Patient.objects.filter(user=self.user).exclude(pk=self.pk).first()
-            if existing_patient:
-                from django.core.exceptions import ValidationError
-                raise ValidationError(f"User {self.user.username} already has a patient record (ID: {existing_patient.pk})")
         
         super().save(*args, **kwargs)
     

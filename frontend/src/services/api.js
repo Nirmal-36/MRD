@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from '../config/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api/',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,10 +28,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      window.location.replace('/login');
+      // Only logout if token actually exists
+      const token = sessionStorage.getItem('token');
+
+      if (token) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('auth_grace');
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(error);
   }
@@ -58,7 +63,7 @@ const apiService = {
 
   // Common Reports (accessible by Principal, HOD, and Admin)
   getStudentHealthReport: (params) => apiClient.get('/common-reports/student-health/', { params }),
-  getHighRiskStudents: (params) => apiClient.get('/common-reports/high-risk-students/', { params }),
+  getHighRiskPatients: (params) => apiClient.get('/common-reports/high-risk-patients/', { params }),
   getUtilizationRate: (params) => apiClient.get('/common-reports/utilization-rate/', { params }),
   getCriticalStock: (params) => apiClient.get('/common-reports/critical-stock/', { params }),
   getInventoryExpiry: (params) => apiClient.get('/common-reports/inventory-expiry/', { params }),
@@ -147,6 +152,7 @@ const apiService = {
 
   // Export Functions - Returns file download
   exportPatients: () => apiClient.get(API_ENDPOINTS.EXPORT_PATIENTS, { responseType: 'blob' }),
+  exportCurrentPatients: (params = {}) => apiClient.get(API_ENDPOINTS.EXPORT_CURRENT_PATIENTS, { params, responseType: 'blob',}),
   exportTreatments: (params) => apiClient.get(API_ENDPOINTS.EXPORT_TREATMENTS, { params, responseType: 'blob' }),
   exportHighRiskPatients: () => apiClient.get(API_ENDPOINTS.EXPORT_HIGH_RISK_PATIENTS, { responseType: 'blob' }),
   exportMedicineInventory: () => apiClient.get(API_ENDPOINTS.EXPORT_MEDICINE_INVENTORY, { responseType: 'blob' }),
@@ -157,6 +163,10 @@ const apiService = {
   exportBedAllocations: (params) => apiClient.get(API_ENDPOINTS.EXPORT_BED_ALLOCATIONS, { params, responseType: 'blob' }),
   exportBedInventory: () => apiClient.get(API_ENDPOINTS.EXPORT_BED_INVENTORY, { responseType: 'blob' }),
   exportCleaningRecords: (params) => apiClient.get(API_ENDPOINTS.EXPORT_CLEANING_RECORDS, { params, responseType: 'blob' }),
+  exportStaffDirectory: () => apiClient.get(API_ENDPOINTS.EXPORT_STAFF_DIRECTORY, { responseType: 'blob',}),
+  exportStudentDirectory: () => apiClient.get(API_ENDPOINTS.EXPORT_STUDENT_DIRECTORY, { responseType: 'blob',}),
+  exportEmployeeDirectory: () => apiClient.get(API_ENDPOINTS.EXPORT_EMPLOYEE_DIRECTORY, { responseType: 'blob',}),
+
   
   // Profile Change Requests
   getProfileChangeRequests: (params) => apiClient.get(API_ENDPOINTS.PROFILE_CHANGE_REQUESTS, { params }),

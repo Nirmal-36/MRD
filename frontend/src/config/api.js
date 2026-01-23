@@ -62,6 +62,7 @@ export const API_ENDPOINTS = {
   
   // Export Endpoints
   EXPORT_PATIENTS: `${API_BASE_URL}/export/patients/`,
+  EXPORT_CURRENT_PATIENTS: `${API_BASE_URL}/export/current-patients/`,
   EXPORT_TREATMENTS: `${API_BASE_URL}/export/treatments/`,
   EXPORT_HIGH_RISK_PATIENTS: `${API_BASE_URL}/export/high-risk-patients/`,
   EXPORT_MEDICINE_INVENTORY: `${API_BASE_URL}/export/medicine-inventory/`,
@@ -72,6 +73,9 @@ export const API_ENDPOINTS = {
   EXPORT_BED_ALLOCATIONS: `${API_BASE_URL}/export/bed-allocations/`,
   EXPORT_BED_INVENTORY: `${API_BASE_URL}/export/bed-inventory/`,
   EXPORT_CLEANING_RECORDS: `${API_BASE_URL}/export/cleaning-records/`,
+  EXPORT_STAFF_DIRECTORY: '/export/staff-directory/',
+  EXPORT_STUDENT_DIRECTORY: '/export/student-directory/',
+  EXPORT_EMPLOYEE_DIRECTORY: '/export/employee-directory/',
 };
 
 export default API_BASE_URL;

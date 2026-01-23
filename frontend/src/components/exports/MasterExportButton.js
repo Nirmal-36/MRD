@@ -29,16 +29,14 @@ import {
   Work as EmployeeIcon,
 } from '@mui/icons-material';
 import apiService from '../../services/api';
-import { handleExport } from '../../utils/exportUtils';
+import  { handleExport }  from '../../utils/exportUtils';
 import { useToast } from '../../components/common/Toast';
-import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * Master Export Button - All export options in one organized menu
  * For Principal and Admin users
  */
 const MasterExportButton = () => {
-  const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
   const { showSuccess, showError } = useToast();

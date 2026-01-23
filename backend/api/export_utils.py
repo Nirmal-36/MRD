@@ -79,7 +79,7 @@ def create_workbook_with_metadata(title, generated_by):
     metadata_sheet['A5'] = 'Generated At:'
     metadata_sheet['B5'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     metadata_sheet['A6'] = 'System:'
-    metadata_sheet['B6'] = 'MRD System - Medical Records Database'
+    metadata_sheet['B6'] = 'KLH Medcare - KLH Medcare Records Database'
     
     # Style metadata
     for row in metadata_sheet['A3:A6']:

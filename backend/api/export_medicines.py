@@ -17,7 +17,7 @@ def export_medicine_inventory(request):
     """Export complete medicine inventory - Pharmacist/Admin/Principal/Doctor"""
     user = request.user
     
-    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor']:
+    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor', 'nurse']:
         return Response({'error': 'Access denied. Only medical staff can export inventory.'}, status=403)
     
     medicines = Medicine.objects.filter(is_active=True).order_by('name')
@@ -55,7 +55,7 @@ def export_low_stock_medicines(request):
     """Export low stock medicines - Pharmacist/Admin/Principal"""
     user = request.user
     
-    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor']:
+    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor', 'nurse']:
         return Response({'error': 'Access denied'}, status=403)
     
     # Get medicines where stock is at or below minimum level
@@ -92,10 +92,10 @@ def export_low_stock_medicines(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def export_expiring_medicines(request):
-    """Export medicines expiring soon - Pharmacist/Admin/Principal"""
+    """Export medicines expiring soon - Pharmacist/Admin/Principal/Doctor/Nurse"""
     user = request.user
     
-    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor']:
+    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor', 'nurse']:
         return Response({'error': 'Access denied'}, status=403)
     
     # Get days parameter (default 90 days)
@@ -139,7 +139,7 @@ def export_medicine_transactions(request):
     """Export medicine transaction history - Pharmacist/Admin/Principal"""
     user = request.user
     
-    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor']:
+    if user.user_type not in ['pharmacist', 'admin', 'principal']:
         return Response({'error': 'Access denied'}, status=403)
     
     # Date range filtering
@@ -186,10 +186,10 @@ def export_medicine_transactions(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def export_stock_requests(request):
-    """Export stock requests - Pharmacist/Admin/Principal"""
+    """Export stock requests - Pharmacist/Admin/Principal/Doctor/Nurse"""
     user = request.user
     
-    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor']:
+    if user.user_type not in ['pharmacist', 'admin', 'principal', 'doctor', 'nurse']:
         return Response({'error': 'Access denied'}, status=403)
     
     # Status filtering
@@ -200,19 +200,19 @@ def export_stock_requests(request):
     if status:
         requests_qs = requests_qs.filter(status=status)
     
-    requests_qs = requests_qs.order_by('-created_at')
+    requests_qs = requests_qs.order_by('-requested_date')
     
     columns = [
-        ('created_at', 'Request Date', lambda obj: obj.created_at.strftime('%Y-%m-%d')),
+        ('created_at', 'Request Date', lambda obj: obj.requested_date.strftime('%Y-%m-%d')),
         ('medicine', 'Medicine Name', lambda obj: obj.medicine.name),
-        ('quantity', 'Requested Quantity'),
+        ('quantity', 'Requested Quantity', lambda obj: obj.requested_quantity),
         ('medicine', 'Unit', lambda obj: obj.medicine.unit),
-        ('medicine', 'Estimated Cost (₹)', lambda obj: obj.quantity * float(obj.medicine.unit_price)),
+        ('medicine', 'Estimated Cost (₹)', lambda obj: obj.requested_quantity * float(obj.medicine.unit_price)),
         ('reason', 'Reason'),
         ('requested_by', 'Requested By', lambda obj: obj.requested_by.get_full_name()),
         ('status', 'Status', lambda obj: obj.get_status_display()),
         ('approved_by', 'Approved By', lambda obj: obj.approved_by.get_full_name() if obj.approved_by else 'N/A'),
-        ('approved_at', 'Approved At', lambda obj: obj.approved_at.strftime('%Y-%m-%d') if obj.approved_at else 'N/A'),
+        ('approved_date', 'Approved Date', lambda obj: obj.approved_date.strftime('%Y-%m-%d') if obj.approved_date else 'N/A'),
     ]
     
     filename = f"stock_requests_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"

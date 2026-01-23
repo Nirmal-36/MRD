@@ -34,7 +34,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, PatientRestrictedViewPermission]
     pagination_class = StandardResultsSetPagination
@@ -96,7 +95,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user_id = getattr(user, 'id', None)
         
         # Base queryset with optimization
-        base_queryset = User.objects.select_related('approved_by')
+        base_queryset = User.objects.with_medical_record_flag().select_related('approved_by')
         
         if user_type in ['admin', 'principal', 'hod', 'doctor', 'nurse']:
             return base_queryset.all()
@@ -386,28 +385,28 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def doctors(self, request):
         """Get all available doctors"""
-        doctors = User.objects.filter(user_type='doctor', is_active=True, is_available=True)
+        doctors = User.objects.with_medical_record_flag().filter(user_type='doctor', is_active=True, is_available=True)
         serializer = UserSerializer(doctors, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def nurses(self, request):
         """Get all nurses"""
-        nurses = User.objects.filter(user_type='nurse', is_active=True)
+        nurses = User.objects.with_medical_record_flag().filter(user_type='nurse', is_active=True)
         serializer = UserSerializer(nurses, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def pharmacists(self, request):
         """Get all pharmacists"""
-        pharmacists = User.objects.filter(user_type='pharmacist', is_active=True, is_approved=True)
+        pharmacists = User.objects.with_medical_record_flag().filter(user_type='pharmacist', is_active=True, is_approved=True)
         serializer = UserSerializer(pharmacists, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def pending_approval(self, request):
         """Get users pending approval (Admin only)"""
-        pending_users = User.objects.filter(
+        pending_users = User.objects.with_medical_record_flag().filter(
             user_type__in=['doctor', 'nurse', 'pharmacist', 'principal', 'hod'],
             is_approved=False
         )
@@ -448,7 +447,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def available_doctors(self, request):
         """Get available doctors"""
-        doctors = User.objects.filter(
+        doctors = User.objects.with_medical_record_flag().filter(
             user_type='doctor', 
             is_available=True, 
             is_active=True
@@ -459,7 +458,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def available_nurses(self, request):
         """Get available nurses"""
-        nurses = User.objects.filter(
+        nurses = User.objects.with_medical_record_flag().filter(
             user_type='nurse', 
             is_available=True, 
             is_active=True
@@ -491,7 +490,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if not query:
             return Response({'error': 'Search query is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        users = User.objects.filter(
+        users = User.objects.with_medical_record_flag().filter(
             Q(username__icontains=query) |
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |

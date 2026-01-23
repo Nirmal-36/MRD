@@ -46,7 +46,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
     def get_user_status(self, obj):
         """Check if patient is linked to a registered user"""
-        if obj.user:
+        if obj.user and hasattr(obj.user, 'medical_record'):
             return {
                 'linked': True,
                 'username': obj.user.username,
@@ -62,23 +62,27 @@ class PatientSerializer(serializers.ModelSerializer):
 
 class TreatmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.name', read_only=True)
-    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    doctor_name = serializers.SerializerMethodField()
     doctor_available = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Treatment
         fields = [
-            'id', 'patient', 'patient_name', 'doctor', 'doctor_name',
-            'doctor_available', 'visit_date', 'symptoms', 'diagnosis',
-            'treatment_given', 'severity', 'follow_up_date', 'notes',
+            'id', 'patient', 'patient_name',
+            'doctor', 'doctor_name', 'doctor_available',
+            'visit_date', 'symptoms', 'diagnosis',
+            'treatment_given', 'severity',
+            'follow_up_date', 'notes',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
 
-        def get_doctor_available(self, obj):
-            if obj.doctor:
-                return obj.doctor.is_available
-            return False
+    def get_doctor_name(self, obj):
+        return obj.doctor.get_full_name() if obj.doctor else None
+
+    def get_doctor_available(self, obj):
+        return bool(obj.doctor and obj.doctor.is_available)
+
 
 
 class PatientDetailSerializer(PatientSerializer):
@@ -120,22 +124,26 @@ class TreatmentMedicineSerializer(serializers.ModelSerializer):
 class TreatmentWithMedicinesSerializer(serializers.ModelSerializer):
     """Extended treatment serializer with prescribed medicines"""
     patient_name = serializers.CharField(source='patient.name', read_only=True)
-    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    doctor_name = serializers.SerializerMethodField()
     doctor_available = serializers.SerializerMethodField()
     prescribed_medicines = TreatmentMedicineSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = Treatment
         fields = [
-            'id', 'patient', 'patient_name', 'doctor', 'doctor_name', 'doctor_available',
-            'visit_date', 'symptoms', 'diagnosis', 'treatment_given',
-            'medicines_prescribed', 'dosage_instructions', 'severity',
-            'follow_up_date', 'notes', 'prescribed_medicines',
+            'id', 'patient', 'patient_name',
+            'doctor', 'doctor_name', 'doctor_available',
+            'visit_date', 'symptoms', 'diagnosis',
+            'treatment_given', 'medicines_prescribed',
+            'dosage_instructions', 'severity',
+            'follow_up_date', 'notes',
+            'prescribed_medicines',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['doctor', 'created_at', 'updated_at']
 
-        def get_doctor_available(self, obj):
-            if obj.doctor:
-                return obj.doctor.is_available
-            return False
+    def get_doctor_name(self, obj):
+        return obj.doctor.get_full_name() if obj.doctor else None
+
+    def get_doctor_available(self, obj):
+        return bool(obj.doctor and obj.doctor.is_available)

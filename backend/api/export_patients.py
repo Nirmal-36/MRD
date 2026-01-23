@@ -84,17 +84,25 @@ def export_treatments(request):
     elif user.user_type == 'doctor':
         # Doctors can see their own treatments
         treatments = treatments.filter(doctor=user)
+
     elif user.user_type == 'nurse':
         # Nurses can see treatments for patients they created
         treatments = treatments.filter(patient__created_by=user)
+
     elif user.user_type == 'student' or user.user_type == 'employee':
         # Students/employees can only see their own treatment records
-        if hasattr(user, 'patient_record'):
-            treatments = treatments.filter(patient=user.patient_record)
-        else:
+        try:
+            patient = Patient.objects.get(user=user)
+            treatments = treatments.filter(patient=patient)
+        except Patient.DoesNotExist:
             return Response({'error': 'No patient record found'}, status=404)
-    elif user.user_type not in ['admin', 'principal', 'pharmacist']:
+        
+    elif user.user_type not in ['admin', 'principal']:
         return Response({'error': 'Access denied'}, status=403)
+    
+    elif user.user_type == 'pharmacist':
+        # Pharmacists can see all treatments (read-only export)
+        pass
     
     # Date range filtering
     start_date = request.query_params.get('start_date')
@@ -113,7 +121,7 @@ def export_treatments(request):
     
     # Define columns
     columns = [
-        ('visit_date', 'Visit Date', lambda obj: obj.visit_date.strftime('%Y-%m-%d %H:%M')),
+        ('visit_date', 'Visit Date',lambda obj: obj.visit_date.strftime('%Y-%m-%d %H:%M') if obj.visit_date else ''),
         ('patient', 'Patient ID', lambda obj: obj.patient.employee_student_id),
         ('patient', 'Patient Name', lambda obj: obj.patient.name),
         ('doctor', 'Doctor', lambda obj: obj.doctor.get_full_name()),
@@ -147,7 +155,7 @@ def export_high_risk_patients(request):
     """Export high-risk patients (allergies/chronic conditions) - Admin/Principal/HOD only"""
     user = request.user
     
-    if user.user_type not in ['admin', 'principal', 'hod']:
+    if user.user_type not in ['admin', 'principal', 'hod', 'doctor']:
         return Response({'error': 'Access denied. Only admin, principal, and HODs can access this report.'}, status=403)
     
     # Get high-risk patients (those with allergies or chronic conditions)
@@ -172,7 +180,7 @@ def export_high_risk_patients(request):
         ('chronic_conditions', 'Chronic Conditions'),
     ]
     
-    if user.user_type in ['admin', 'principal', 'hod']:
+    if user.user_type in ['admin', 'principal', 'hod', 'doctor']:
         columns.insert(5, ('user', 'Department', lambda obj: obj.user.department if obj.user else 'N/A'))
     
     filename = f"high_risk_patients_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
@@ -185,3 +193,65 @@ def export_high_risk_patients(request):
         title=title,
         generated_by=f"{user.get_full_name()} ({user.username})"
     )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_current_patients(request):
+    """Export currently admitted patients to Excel - Role-based filtering"""
+    user = request.user
+
+    # Base queryset: patients who are currently admitted
+    # ⚠️ CHANGE `bed_allocations__is_active=True` if your field name differs
+    patients = (
+        Patient.objects
+        .select_related('user', 'created_by')
+        .filter(bed_allocations__is_active=True)
+        .distinct()
+    )
+
+    # Role-based filtering
+    if user.user_type == 'hod':
+        # HOD can only see their department's students
+        patients = patients.filter(
+            user__department=user.department,
+            user__user_type='student'
+        )
+    elif user.user_type in ['doctor', 'nurse']:
+        # Doctors/nurses can see patients they created
+        patients = patients.filter(created_by=user)
+    elif user.user_type not in ['admin', 'principal', 'pharmacist']:
+        return Response({'error': 'Access denied'}, status=403)
+
+    # Define columns
+    columns = [
+        ('employee_student_id', 'Patient ID'),
+        ('name', 'Name'),
+        ('age', 'Age'),
+        ('gender', 'Gender', lambda obj: obj.get_gender_display()),
+        ('patient_type', 'Type', lambda obj: obj.get_patient_type_display()),
+        ('phone', 'Phone'),
+        ('blood_group', 'Blood Group'),
+        ('allergies', 'Allergies'),
+        ('chronic_conditions', 'Chronic Conditions'),
+        ('created_at', 'Registered On', lambda obj: obj.created_at.strftime('%Y-%m-%d')),
+    ]
+
+    # If HOD/Admin/Principal, add department
+    if user.user_type in ['hod', 'admin', 'principal']:
+        columns.insert(
+            6,
+            ('user', 'Department', lambda obj: obj.user.department if obj.user else 'N/A')
+        )
+
+    filename = f"current_patients_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    title = f"Current Admissions - {user.get_user_type_display()}"
+
+    return export_queryset_to_excel(
+        queryset=patients,
+        columns=columns,
+        filename=filename,
+        title=title,
+        generated_by=f"{user.get_full_name()} ({user.username})"
+    )
+
+

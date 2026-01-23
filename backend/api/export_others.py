@@ -70,13 +70,19 @@ def export_staff_directory(request):
     """Export staff directory - Admin/Principal only"""
     user = request.user
     
-    if user.user_type not in ['admin', 'principal']:
+    if user.user_type not in ['admin', 'principal', 'hod']:
         return Response({'error': 'Access denied. Only admin and principal can export staff directory.'}, status=403)
     
     # Get all medical staff
-    staff = User.objects.filter(
-        user_type__in=['doctor', 'nurse', 'pharmacist', 'admin', 'principal', 'hod']
-    ).order_by('user_type', 'first_name')
+    if user.user_type == 'hod':
+        staff = User.objects.filter(
+            user_type__in=['doctor', 'nurse', 'pharmacist', 'admin', 'principal', 'hod'],
+            department=user.department
+        ).order_by('user_type', 'first_name')
+    else:
+        staff = User.objects.filter(
+            user_type__in=['doctor', 'nurse', 'pharmacist', 'admin', 'principal', 'hod']
+        ).order_by('user_type', 'first_name')
     
     columns = [
         ('username', 'Username'),
@@ -152,13 +158,18 @@ def export_student_directory(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def export_employee_directory(request):
-    """Export employee directory - Admin/Principal only"""
+    """Export employee directory - Admin/Principal/HOD"""
     user = request.user
     
-    if user.user_type not in ['admin', 'principal']:
-        return Response({'error': 'Access denied. Only admin and principal can export employee directory.'}, status=403)
+    if user.user_type not in ['admin', 'principal', 'hod']:
+        return Response({'error': 'Access denied. Only admin, principal, and HODs can export employee directory.'}, status=403)
     
-    employees = User.objects.filter(user_type='employee').order_by('department', 'first_name')
+    employees = User.objects.filter(user_type='employee')
+
+    if user.user_type == 'hod':
+        employees = employees.filter(department=user.department)
+    
+    employees = employees.order_by('department', 'first_name')
     
     columns = [
         ('username', 'Username'),
@@ -174,7 +185,9 @@ def export_employee_directory(request):
     
     filename = f"employee_directory_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     title = "Employee Directory"
-    
+    if user.user_type == 'hod':
+        title += f" - {user.department} Department"
+        
     return export_queryset_to_excel(
         queryset=employees,
         columns=columns,

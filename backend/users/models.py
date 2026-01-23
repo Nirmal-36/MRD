@@ -1,8 +1,8 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.core.exceptions import ValidationError
 from .validators import validate_indian_phone, validate_klh_email
-
+from .managers import UserManager
 
 class User(AbstractUser):
     USER_TYPES = (
@@ -49,6 +49,8 @@ class User(AbstractUser):
     approved_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    objects = UserManager()
+
 
     def clean(self):
         """Validate that the correct ID field is provided based on user type"""

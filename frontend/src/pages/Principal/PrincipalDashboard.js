@@ -38,7 +38,7 @@ const PrincipalDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [quickStats, setQuickStats] = useState({
     criticalStock: 0,
-    highRiskStudents: 0,
+    HighRiskPatients: 0,
     totalVisits: 0,
     bedOccupancy: 0,
   });
@@ -59,7 +59,7 @@ const PrincipalDashboard = () => {
             .getCriticalStock({})
             .catch(() => ({ data: { total_count: 0 } })),
           apiService
-            .getHighRiskStudents({})
+            .getHighRiskPatients({})
             .catch(() => ({ data: { total_count: 0 } })),
           apiService
             .getUtilizationRate({ months: 1 })
@@ -71,7 +71,7 @@ const PrincipalDashboard = () => {
 
       setQuickStats({
         criticalStock: criticalStockRes.data.total_count || 0,
-        highRiskStudents: highRiskRes.data.total_count || 0,
+        HighRiskPatients: highRiskRes.data.total_count || 0,
         totalVisits: utilizationRes.data.total_visits || 0,
         bedOccupancy: bedCapacityRes.data.occupancy_rate || 0,
       });
@@ -89,7 +89,7 @@ const PrincipalDashboard = () => {
     { label: "Critical Stock", value: quickStats.criticalStock },
     {
       label: "High-Risk Students",
-      value: quickStats.highRiskStudents,
+      value: quickStats.HighRiskPatients,
       color: theme.palette.error.main,
     },
     { label: "Total Visits", value: quickStats.totalVisits },

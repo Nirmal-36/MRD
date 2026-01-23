@@ -87,12 +87,13 @@ const Patients = () => {
       setLoading(false);
     }
   };
-
+  
   const searchRegisteredUsers = async () => {
     try {
       const response = await apiService.searchUsers(userSearchTerm);
       const users = response.data?.users || response.data || [];
       setRegisteredUsers(users);
+      console.log('Fetched users:', users);
     } catch (err) {
       console.error('Error searching users:', err);
       setRegisteredUsers([]);
@@ -353,10 +354,11 @@ const Patients = () => {
                 <Grid item xs={12}>
                   <Autocomplete
                     options={Array.isArray(registeredUsers) ? registeredUsers : []}
-                    getOptionLabel={(option) => 
-                      option ? `${option.full_name || option.username} - ${option.employee_id || option.student_id} ${option.has_medical_record ? '(Has Record)' : ''}` : ''
+                    getOptionLabel={(option) =>
+                      `${option.full_name} - ${option.employee_id || option.student_id}
+                      ${option.has_medical_record ? '(Has Record)' : ''}`
                     }
-                    getOptionDisabled={(option) => option?.has_medical_record || false}
+getOptionDisabled={(option) => option?.has_medical_record}
                     onInputChange={(event, newValue) => {
                       setUserSearchTerm(newValue || '');
                     }}

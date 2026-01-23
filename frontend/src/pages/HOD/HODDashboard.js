@@ -26,19 +26,21 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/api';
+import { MasterExportButton } from '../../components/exports';
+// import HighRiskPatients from './HighRiskPatients';
 
 const HODDashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
   const department = user?.department;
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dashboardData, setDashboardData] = useState(null);
   const [quickStats, setQuickStats] = useState({
     criticalStock: 0,
-    highRiskStudents: 0,
+    HighRiskPatients: 0,
     totalVisits: 0,
     bedOccupancy: 0,
   });
@@ -59,14 +61,14 @@ const HODDashboard = () => {
       const params = department ? { department } : {};
       const [criticalStockRes, highRiskRes, utilizationRes, bedCapacityRes] = await Promise.all([
         apiService.getCriticalStock(params).catch(() => ({ data: { total_count: 0 } })),
-        apiService.getHighRiskStudents(params).catch(() => ({ data: { total_count: 0 } })),
+        apiService.getHighRiskPatients(params).catch(() => ({ data: { total_count: 0 } })),
         apiService.getUtilizationRate({ ...params, months: 1 }).catch(() => ({ data: { total_visits: 0 } })),
         apiService.getBedCapacityReport(params).catch(() => ({ data: { occupancy_rate: 0 } })),
       ]);
 
       setQuickStats({
         criticalStock: criticalStockRes.data.total_count || 0,
-        highRiskStudents: highRiskRes.data.total_count || 0,
+        HighRiskPatients: highRiskRes.data.total_count || 0,
         totalVisits: utilizationRes.data.total_visits || 0,
         bedOccupancy: bedCapacityRes.data.occupancy_rate || 0,
       });
@@ -98,7 +100,7 @@ const HODDashboard = () => {
       <Box sx={{ mb: theme.spacing(4) }}>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box>
-            <Typography variant="h4" gutterBottom sx={{ 
+            <Typography variant="h4" gutterBottom sx={{
               fontWeight: theme.typography.h4.fontWeight,
               color: 'primary.main'
             }}>
@@ -124,7 +126,7 @@ const HODDashboard = () => {
       {/* Quick Stats Cards */}
       <Grid container spacing={theme.spacing(3)} sx={{ mb: theme.spacing(4) }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
             color: theme.palette.primary.contrastText,
             height: '100%'
@@ -144,7 +146,7 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
             color: theme.palette.success.contrastText,
             height: '100%'
@@ -164,7 +166,7 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`,
             color: theme.palette.warning.contrastText,
             height: '100%'
@@ -184,7 +186,7 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
+          <Card sx={{
             background: `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.light} 100%)`,
             color: theme.palette.info.contrastText,
             height: '100%'
@@ -202,6 +204,28 @@ const HODDashboard = () => {
             </CardContent>
           </Card>
         </Grid>
+      {/* Export Button */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Box
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 1,
+            p: 2,
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+            color: 'white',
+          }}
+        >
+          <Typography variant="body2" fontWeight="medium" align="center">
+            Export All Reports
+          </Typography>
+          <MasterExportButton />
+        </Box>
+      </Grid>
       </Grid>
 
       {/* Department Overview */}
@@ -249,7 +273,7 @@ const HODDashboard = () => {
                     High-Risk Students
                   </Typography>
                   <Typography variant="h5" fontWeight={theme.typography.h5.fontWeight} color="error.main">
-                    {quickStats.highRiskStudents}
+                    {quickStats.HighRiskPatients}
                   </Typography>
                 </Box>
               </Grid>
@@ -316,12 +340,12 @@ const HODDashboard = () => {
       </Typography>
       <Grid container spacing={theme.spacing(3)}>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ 
+          <Card sx={{
             cursor: 'pointer',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
           }}
-          onClick={() => navigate('/hod/student-health')}
+            onClick={() => navigate('/hod/student-health')}
           >
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={theme.spacing(2)}>
@@ -339,12 +363,12 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ 
+          <Card sx={{
             cursor: 'pointer',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
           }}
-          onClick={() => navigate('/hod/high-risk')}
+            onClick={() => navigate('/hod/high-risk')}
           >
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={theme.spacing(2)}>
@@ -362,12 +386,12 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ 
+          <Card sx={{
             cursor: 'pointer',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
           }}
-          onClick={() => navigate('/hod/utilization')}
+            onClick={() => navigate('/hod/utilization')}
           >
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={theme.spacing(2)}>
@@ -385,12 +409,12 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ 
+          <Card sx={{
             cursor: 'pointer',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
           }}
-          onClick={() => navigate('/hod/inventory')}
+            onClick={() => navigate('/hod/inventory')}
           >
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={theme.spacing(2)}>
@@ -408,12 +432,12 @@ const HODDashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ 
+          <Card sx={{
             cursor: 'pointer',
             transition: 'transform 0.2s',
             '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
           }}
-          onClick={() => navigate('/hod/beds')}
+            onClick={() => navigate('/hod/beds')}
           >
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={theme.spacing(2)}>
